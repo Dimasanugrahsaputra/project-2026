@@ -2,86 +2,59 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Filament\Widgets\TableWidget;
 use Spatie\Activitylog\Models\Activity;
 
-class LatestAccessLogs extends BaseWidget
+class LatestAccessLogs extends TableWidget
 {
-    use HasWidgetShield;
-    protected static ?int $sort = 100;
+    protected static ?string $heading = 'Latest Access Logs';
 
-    protected int|string|array $columnSpan = 2;
+    protected static ?int $sort = 2;
 
-    protected static function getLogNameColors(): array
-    {
-        $customs = [];
-
-        foreach (config('filament-logger.custom') ?? [] as $custom) {
-            if (filled($custom['color'] ?? null)) {
-                $customs[$custom['color']] = $custom['log_name'];
-            }
-        }
-
-        return array_merge(
-            (config('filament-logger.resources.enabled') && config('filament-logger.resources.color')) ? [
-                config('filament-logger.resources.color') => config('filament-logger.resources.log_name'),
-            ] : [],
-            (config('filament-logger.models.enabled') && config('filament-logger.models.color')) ? [
-                config('filament-logger.models.color') => config('filament-logger.models.log_name'),
-            ] : [],
-            (config('filament-logger.access.enabled') && config('filament-logger.access.color')) ? [
-                config('filament-logger.access.color') => config('filament-logger.access.log_name'),
-            ] : [],
-            (config('filament-logger.notifications.enabled') && config('filament-logger.notifications.color')) ? [
-                config('filament-logger.notifications.color') => config('filament-logger.notifications.log_name'),
-            ] : [],
-            $customs,
-        );
-    }
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Activity::query()->latest()->take(5)
+                Activity::query()
+                    ->latest()
+                    ->limit(5)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('log_name')
-                    ->badge()
-                    ->colors(static::getLogNameColors())
-                    ->label(__('filament-logger::filament-logger.resource.label.type'))
-                    ->formatStateUsing(fn ($state) => ucwords($state))
-                    ->sortable(),
+                    ->label('Type')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('event')
-                    ->label(__('filament-logger::filament-logger.resource.label.event'))
-                    ->sortable(),
+                    ->label('Event')
+                    ->formatStateUsing(fn (?string $state): string => ucfirst($state ?? '-')),
 
                 Tables\Columns\TextColumn::make('description')
-                    ->label(__('filament-logger::filament-logger.resource.label.description'))
-                    ->wrap(),
+                    ->label('Description')
+                    ->limit(50),
 
                 Tables\Columns\TextColumn::make('subject_type')
-                    ->label(__('filament-logger::filament-logger.resource.label.subject'))
-                    ->formatStateUsing(function ($state, Model $record) {
-                        /** @var Activity $record */
-                        if (! $state) {
+                    ->label('Subject')
+                    ->formatStateUsing(function ($record): string {
+                        if (! $record->subject_type) {
                             return '-';
                         }
 
-                        return Str::of($state)->afterLast('\\')->headline() . ' # ' . $record->subject_id;
+                        $model = class_basename($record->subject_type);
+
+                        return $model . ' #' . ($record->subject_id ?? '-');
                     }),
 
                 Tables\Columns\TextColumn::make('causer.name')
-                    ->label(__('filament-logger::filament-logger.resource.label.user')),
+                    ->label('User')
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label(__('filament-logger::filament-logger.resource.label.logged_at'))
-                    ->dateTime(config('d/m/Y H:i A'))
+                    ->label('Logged At')
+                    ->dateTime('d M Y H:i:s')
                     ->sortable(),
             ])
             ->paginated(false);
