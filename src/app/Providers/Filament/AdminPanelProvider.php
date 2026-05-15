@@ -2,92 +2,67 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Admin\Widgets\LatestAccessLogs;
-use App\Filament\Admin\Widgets\StatistikPerpustakaan;
-use Filament\Enums\ThemeMode;
+use App\Filament\Admin\Resources\AnggotaResource;
+use App\Filament\Admin\Resources\BukuResource;
+use App\Filament\Admin\Resources\DendaResource;
+use App\Filament\Admin\Resources\DetailPeminjamanResource;
+use App\Filament\Admin\Resources\KategoriBukuResource;
+use App\Filament\Admin\Resources\PeminjamanResource;
+use App\Filament\Admin\Resources\PengembalianBukuResource;
+use App\Filament\Admin\Resources\RakBukuResource;
+use App\Filament\Admin\Resources\UserResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
-use Joaopaulolndev\FilamentEditProfile\Pages\EditProfilePage;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-    ->default()
-    ->id('admin')
-    ->path('admin')
-    ->spa()
-    ->login()
-    ->passwordReset()
-    // ->profile(EditProfilePage::class, isSimple: false)
-    ->defaultThemeMode(ThemeMode::Light)
-            ->font('Montserrat')
+            ->default()
+            ->id('admin')
+            ->path('admin')
+            ->login()
+
             ->colors([
                 'primary' => Color::Blue,
             ])
-            ->maxContentWidth(MaxWidth::SevenExtraLarge)
 
-            ->discoverResources(
-                in: app_path('Filament/Admin/Resources'),
-                for: 'App\\Filament\\Admin\\Resources'
-            )
-
-            ->discoverPages(
-                in: app_path('Filament/Admin/Pages'),
-                for: 'App\\Filament\\Admin\\Pages'
-            )
-
+            // Dashboard bawaan Filament
             ->pages([
                 Pages\Dashboard::class,
             ])
 
+            // Daftarkan resource manual agar pasti muncul di sidebar
+            ->resources([
+                AnggotaResource::class,
+                BukuResource::class,
+                DendaResource::class,
+                DetailPeminjamanResource::class,
+                KategoriBukuResource::class,
+                PeminjamanResource::class,
+                PengembalianBukuResource::class,
+                RakBukuResource::class,
+                UserResource::class,
+            ])
+
+            // Widget dashboard
             ->discoverWidgets(
                 in: app_path('Filament/Admin/Widgets'),
                 for: 'App\\Filament\\Admin\\Widgets'
             )
-
-            ->widgets([
-                StatistikPerpustakaan::class,
-                LatestAccessLogs::class,
-            ])
-
-            ->plugins([
-                FilamentEditProfilePlugin::make(),
-            ])
-
-            ->navigationGroups([
-                NavigationGroup::make()
-                    ->label('Administration')
-                    ->collapsed(false),
-
-                NavigationGroup::make()
-                    ->label('Master Data')
-                    ->collapsed(false),
-
-                NavigationGroup::make()
-                    ->label('Transaksi')
-                    ->collapsed(false),
-
-                NavigationGroup::make()
-                    ->label('Manajemen Pengguna')
-                    ->collapsed(false),
-            ])
 
             ->middleware([
                 EncryptCookies::class,

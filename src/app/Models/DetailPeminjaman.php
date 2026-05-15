@@ -7,16 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DetailPeminjaman extends Model
 {
-    protected $table = 'detail_peminjamen';
+    protected $table = 'detail_peminjamans';
 
     protected $fillable = [
         'peminjaman_id',
         'buku_id',
         'jumlah',
-    ];
-
-    protected $casts = [
-        'jumlah' => 'integer',
     ];
 
     public function peminjaman(): BelongsTo

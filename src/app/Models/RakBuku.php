@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RakBuku extends Model
 {
+    use HasFactory;
+
     protected $table = 'rak_bukus';
 
     protected $fillable = [
-        'kode_rak',
         'nama_rak',
+        'kode_rak',
         'lokasi_rak',
     ];
 

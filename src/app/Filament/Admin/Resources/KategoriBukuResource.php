@@ -32,7 +32,16 @@ class KategoriBukuResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Informasi Kategori Buku')
                     ->schema([
-                        Forms\Components\TextInput::make('nama')
+                        Forms\Components\TextInput::make('kode_kategori')
+                            ->label('Kode Kategori')
+                            ->default(fn () => 'KTG-' . now()->format('YmdHis'))
+                            ->disabled()
+                            ->dehydrated(true)
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('nama_kategori')
                             ->label('Nama Kategori')
                             ->required()
                             ->maxLength(255),
@@ -42,7 +51,7 @@ class KategoriBukuResource extends Resource
                             ->rows(4)
                             ->columnSpanFull(),
                     ])
-                    ->columns(1),
+                    ->columns(2),
             ]);
     }
 
@@ -50,19 +59,29 @@ class KategoriBukuResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nama')
+                Tables\Columns\TextColumn::make('kode_kategori')
+                    ->label('Kode')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('nama_kategori')
                     ->label('Nama Kategori')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('deskripsi')
                     ->label('Deskripsi')
-                    ->limit(60)
-                    ->searchable()
-                    ->toggleable(),
+                    ->limit(50)
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diubah')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -71,6 +90,9 @@ class KategoriBukuResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
+
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -78,18 +100,20 @@ class KategoriBukuResource extends Resource
                     ->label('Hapus'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->label('Hapus Data Terpilih'),
-            ])
-            ->defaultSort('created_at', 'desc');
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Hapus Terpilih'),
+                ]),
+            ]);
     }
 
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListKategoriBukus::route('/'),
-            'create' => Pages\CreateKategoriBuku::route('/create'),
-            'edit' => Pages\EditKategoriBuku::route('/{record}/edit'),
-        ];
-    }
+  public static function getPages(): array
+{
+    return [
+        'index' => Pages\ListKategoriBukus::route('/'),
+        'create' => Pages\CreateKategoriBuku::route('/create'),
+        'view' => Pages\ViewKategoriBuku::route('/{record}'),
+        'edit' => Pages\EditKategoriBuku::route('/{record}/edit'),
+    ];
+}
 }

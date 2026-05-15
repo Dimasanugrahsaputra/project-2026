@@ -34,7 +34,7 @@ class BukuResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('kode_buku')
                             ->label('Kode Buku')
-                            ->default(fn () => 'BK-' . now()->format('YmdHis'))
+                            ->default(fn () => self::generateKodeBuku())
                             ->required()
                             ->unique(
                                 table: 'bukus',
@@ -43,7 +43,7 @@ class BukuResource extends Resource
                             )
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('judul')
+                        Forms\Components\TextInput::make('judul_buku')
                             ->label('Judul Buku')
                             ->required()
                             ->maxLength(255),
@@ -77,7 +77,7 @@ class BukuResource extends Resource
                             ->numeric()
                             ->required()
                             ->minValue(1900)
-                            ->maxValue((int) now()->year),
+                            ->maxValue(date('Y')),
 
                         Forms\Components\TextInput::make('isbn')
                             ->label('ISBN')
@@ -109,11 +109,11 @@ class BukuResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_buku')
-                    ->label('Kode')
+                    ->label('Kode Buku')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('judul')
+                Tables\Columns\TextColumn::make('judul_buku')
                     ->label('Judul Buku')
                     ->searchable()
                     ->sortable(),
@@ -133,6 +133,15 @@ class BukuResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('penerbit')
+                    ->label('Penerbit')
+                    ->searchable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('tahun_terbit')
+                    ->label('Tahun')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('stok')
                     ->label('Stok')
                     ->sortable(),
@@ -147,6 +156,9 @@ class BukuResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
+
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -168,5 +180,10 @@ class BukuResource extends Resource
             'create' => Pages\CreateBuku::route('/create'),
             'edit' => Pages\EditBuku::route('/{record}/edit'),
         ];
+    }
+
+    private static function generateKodeBuku(): string
+    {
+        return 'BK-' . now()->format('YmdHis');
     }
 }

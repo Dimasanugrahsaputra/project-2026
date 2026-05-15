@@ -11,19 +11,21 @@ class BukuSeeder extends Seeder
 {
     public function run(): void
     {
-        $kategori = KategoriBuku::where('nama_kategori', 'Teknologi')->first();
-        $rak = RakBuku::where('nama_rak', 'Rak A')->first();
+        $kategori = KategoriBuku::first();
+        $rak = RakBuku::first();
 
         if (! $kategori || ! $rak) {
             return;
         }
 
         Buku::updateOrCreate(
-            ['kode_buku' => 'BK001'],
             [
+                'kode_buku' => 'BK001',
+            ],
+            [
+                'judul_buku' => 'Belajar Laravel',
                 'kategori_buku_id' => $kategori->id,
                 'rak_buku_id' => $rak->id,
-                'judul_buku' => 'Belajar Laravel',
                 'penulis' => 'Dimas',
                 'penerbit' => 'Gramedia',
                 'tahun_terbit' => 2024,

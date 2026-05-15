@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KategoriBuku extends Model
 {
+    use HasFactory;
+
     protected $table = 'kategori_bukus';
 
     protected $fillable = [
@@ -15,7 +17,7 @@ class KategoriBuku extends Model
         'deskripsi',
     ];
 
-    public function bukus(): HasMany
+    public function bukus()
     {
         return $this->hasMany(Buku::class, 'kategori_buku_id');
     }

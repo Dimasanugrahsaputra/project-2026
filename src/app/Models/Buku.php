@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Buku extends Model
 {
@@ -10,9 +11,9 @@ class Buku extends Model
 
     protected $fillable = [
         'kode_buku',
+        'judul_buku',
         'kategori_buku_id',
         'rak_buku_id',
-        'judul',
         'penulis',
         'penerbit',
         'tahun_terbit',
@@ -21,18 +22,13 @@ class Buku extends Model
         'deskripsi',
     ];
 
-    public function kategoriBuku()
+    public function kategoriBuku(): BelongsTo
     {
         return $this->belongsTo(KategoriBuku::class, 'kategori_buku_id');
     }
 
-    public function rakBuku()
+    public function rakBuku(): BelongsTo
     {
         return $this->belongsTo(RakBuku::class, 'rak_buku_id');
-    }
-
-    public function detailPeminjamans()
-    {
-        return $this->hasMany(DetailPeminjaman::class, 'buku_id');
     }
 }

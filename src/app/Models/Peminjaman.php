@@ -3,32 +3,43 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Peminjaman extends Model
 {
-    protected $table = 'peminjamen';
+    protected $table = 'peminjamans';
 
     protected $fillable = [
-    'kode_peminjaman',
-    'anggota_id',
-    'petugas_id',
-    'tanggal_pinjam',
-    'tanggal_jatuh_tempo',
-    'tanggal_kembali',
-    'status',
-];
-    public function petugas()
-    {
-    return $this->belongsTo(User::class, 'petugas_id');
-    }
+        'kode_peminjaman',
+        'anggota_id',
+        'tanggal_pinjam',
+        'tanggal_jatuh_tempo',
+        'status',
+    ];
 
-    public function anggota()
+    protected $casts = [
+        'tanggal_pinjam' => 'date',
+        'tanggal_jatuh_tempo' => 'date',
+    ];
+
+    public function anggota(): BelongsTo
     {
         return $this->belongsTo(Anggota::class, 'anggota_id');
     }
 
-    public function detailPeminjaman()
+    public function detailPeminjaman(): HasMany
     {
         return $this->hasMany(DetailPeminjaman::class, 'peminjaman_id');
+    }
+
+    public function detailPeminjamans(): HasMany
+    {
+        return $this->hasMany(DetailPeminjaman::class, 'peminjaman_id');
+    }
+
+    public function pengembalianBuku(): HasMany
+    {
+        return $this->hasMany(PengembalianBuku::class, 'peminjaman_id');
     }
 }

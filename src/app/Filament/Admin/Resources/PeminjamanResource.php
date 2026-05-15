@@ -39,16 +39,12 @@ class PeminjamanResource extends Resource
                     ->default(fn () => Auth::id())
                     ->dehydrated(),
 
-                        Forms\Components\TextInput::make('kode_peminjaman')
-                            ->label('Kode Peminjaman')
-                            ->default(fn () => self::generateKodePeminjaman())
-                            ->required()
-                            ->unique(
-                                table: 'peminjaman',
-                                column: 'kode_peminjaman',
-                                ignoreRecord: true
-                            )
-                            ->maxLength(255),
+                       Forms\Components\TextInput::make('kode_peminjaman')
+                    ->label('Kode Peminjaman')
+                    ->required()
+                    ->default(fn () => 'PMJ-' . now()->format('YmdHis') . '-' . rand(100, 999))
+                    ->unique(table: 'peminjamans', column: 'kode_peminjaman', ignoreRecord: true)
+                    ->maxLength(255),
 
                         Forms\Components\Select::make('anggota_id')
                             ->label('Anggota')

@@ -4,17 +4,20 @@ namespace App\Filament\Admin\Resources\KategoriBukuResource\Pages;
 
 use App\Filament\Admin\Resources\KategoriBukuResource;
 use Filament\Actions;
-use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\Pages\ViewRecord;
 
-class ListKategoriBukus extends ListRecords
+class ViewKategoriBuku extends ViewRecord
 {
     protected static string $resource = KategoriBukuResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->label('Tambah Kategori Buku'),
+            Actions\EditAction::make()
+                ->label('Edit'),
+
+            Actions\DeleteAction::make()
+                ->label('Hapus'),
         ];
     }
 }

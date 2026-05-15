@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PengembalianBuku extends Model
 {
@@ -11,30 +12,17 @@ class PengembalianBuku extends Model
     protected $fillable = [
         'kode_pengembalian',
         'peminjaman_id',
-        'petugas_id',
-        'tanggal_kembali',
-        'jumlah_hari_terlambat',
+        'tanggal_pengembalian',
         'status',
         'catatan',
     ];
 
     protected $casts = [
-        'tanggal_kembali' => 'date',
-        'jumlah_hari_terlambat' => 'integer',
+        'tanggal_pengembalian' => 'date',
     ];
 
-    public function peminjaman()
+    public function peminjaman(): BelongsTo
     {
         return $this->belongsTo(Peminjaman::class, 'peminjaman_id');
-    }
-
-    public function petugas()
-    {
-        return $this->belongsTo(User::class, 'petugas_id');
-    }
-
-    public function denda()
-    {
-        return $this->hasOne(Denda::class, 'pengembalian_buku_id');
     }
 }
