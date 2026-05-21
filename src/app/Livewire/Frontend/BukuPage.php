@@ -3,11 +3,9 @@
 namespace App\Livewire\Frontend;
 
 use App\Models\Buku;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('frontend.layouts.app')]
 class BukuPage extends Component
 {
     use WithPagination;
@@ -21,17 +19,18 @@ class BukuPage extends Component
 
     public function render()
     {
-        $buku = Buku::query()
+        $bukus = Buku::query()
             ->when($this->search, function ($query) {
                 $query->where('judul', 'like', '%' . $this->search . '%')
                     ->orWhere('kode_buku', 'like', '%' . $this->search . '%')
-                    ->orWhere('penulis', 'like', '%' . $this->search . '%');
+                    ->orWhere('penulis', 'like', '%' . $this->search . '%')
+                    ->orWhere('penerbit', 'like', '%' . $this->search . '%');
             })
-            ->latest()
-            ->paginate(9);
+            ->orderByDesc('id')
+            ->paginate(6);
 
         return view('frontend.pages.buku', [
-            'buku' => $buku,
-        ]);
+            'bukus' => $bukus,
+        ])->layout('frontend.layouts.app');
     }
 }

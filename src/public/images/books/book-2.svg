@@ -1,0 +1,6 @@
+<svg width="500" height="650" viewBox="0 0 500 650" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="500" height="650" rx="28" fill="#7C3AED"/>
+<rect x="70" y="90" width="360" height="470" rx="20" fill="#EDE9FE"/>
+<text x="250" y="250" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#4C1D95">Database</text>
+<text x="250" y="315" text-anchor="middle" font-size="26" font-family="Arial" fill="#5B21B6">MariaDB</text>
+</svg>
