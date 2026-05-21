@@ -1,23 +1,12 @@
 <?php
 
+use App\Livewire\Frontend\BukuPage;
+use App\Livewire\Frontend\DetailBukuPage;
+use App\Livewire\Frontend\HomePage;
 use Illuminate\Support\Facades\Route;
-use Livewire\Livewire;
-use Illuminate\Support\Facades\Response;
 
-/* NOTE: Do Not Remove
-/ Livewire asset handling if using sub folder in domain
-*/
+Route::get('/', HomePage::class)->name('frontend.home');
 
-Livewire::setUpdateRoute(function ($handle) {
-    return Route::post(config('app.asset_prefix') . '/livewire/update', $handle);
-});
+Route::get('/buku', BukuPage::class)->name('frontend.buku');
 
-Livewire::setScriptRoute(function ($handle) {
-    return Route::get(config('app.asset_prefix') . '/livewire/livewire.js', $handle);
-});
-/*
-/ END
-*/
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/buku/{buku}', DetailBukuPage::class)->name('frontend.buku.detail');

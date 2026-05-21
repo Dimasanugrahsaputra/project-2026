@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\PengembalianBuku;
 use App\Models\User;
+use App\Models\PengembalianBuku;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PengembalianBukuPolicy
@@ -11,98 +11,98 @@ class PengembalianBukuPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list pengembalian buku.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_pengembalian::buku');
     }
 
     /**
-     * Izinkan melihat detail pengembalian buku.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('view_pengembalian::buku');
     }
 
     /**
-     * Izinkan membuat pengembalian buku.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_pengembalian::buku');
     }
 
     /**
-     * Izinkan edit pengembalian buku.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('update_pengembalian::buku');
     }
 
     /**
-     * Izinkan hapus pengembalian buku.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('delete_pengembalian::buku');
     }
 
     /**
-     * Izinkan hapus banyak pengembalian buku.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_pengembalian::buku');
     }
 
     /**
-     * Izinkan hapus permanen pengembalian buku.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak pengembalian buku.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore pengembalian buku.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak pengembalian buku.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi pengembalian buku.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, PengembalianBuku $pengembalianBuku): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder pengembalian buku.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }

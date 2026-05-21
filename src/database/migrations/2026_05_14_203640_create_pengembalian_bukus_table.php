@@ -10,11 +10,23 @@ return new class extends Migration
     {
         Schema::create('pengembalian_bukus', function (Blueprint $table) {
             $table->id();
+
             $table->string('kode_pengembalian')->unique();
-            $table->foreignId('peminjaman_id')->constrained('peminjamans')->cascadeOnDelete();
+
+            $table->foreignId('peminjaman_id')
+                ->constrained('peminjamans')
+                ->cascadeOnDelete()
+                ->unique();
+
             $table->date('tanggal_pengembalian');
-            $table->enum('status', ['Dikembalikan', 'Terlambat'])->default('Dikembalikan');
+
+            $table->enum('status', [
+                'tepat_waktu',
+                'terlambat',
+            ])->default('tepat_waktu');
+
             $table->text('catatan')->nullable();
+
             $table->timestamps();
         });
     }

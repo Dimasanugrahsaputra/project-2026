@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\KategoriBuku;
 use App\Models\User;
+use App\Models\KategoriBuku;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class KategoriBukuPolicy
@@ -11,98 +11,98 @@ class KategoriBukuPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list kategori buku.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_kategori::buku');
     }
 
     /**
-     * Izinkan melihat detail kategori buku.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('view_kategori::buku');
     }
 
     /**
-     * Izinkan membuat kategori buku.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_kategori::buku');
     }
 
     /**
-     * Izinkan edit kategori buku.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('update_kategori::buku');
     }
 
     /**
-     * Izinkan hapus kategori buku.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('delete_kategori::buku');
     }
 
     /**
-     * Izinkan hapus banyak kategori buku.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_kategori::buku');
     }
 
     /**
-     * Izinkan hapus permanen kategori buku.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak kategori buku.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore kategori buku.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak kategori buku.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi kategori buku.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, KategoriBuku $kategoriBuku): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder kategori buku.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }

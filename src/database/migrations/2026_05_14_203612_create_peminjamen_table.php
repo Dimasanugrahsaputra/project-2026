@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Anggota;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,11 +12,13 @@ return new class extends Migration
     {
         Schema::create('peminjamans', function (Blueprint $table) {
             $table->id();
+            $table->foreignIdFor(User::class, 'petugas_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignIdFor(Anggota::class, 'anggota_id')->constrained('anggotas')->cascadeOnDelete();
             $table->string('kode_peminjaman')->unique();
-            $table->foreignId('anggota_id')->constrained('anggotas')->cascadeOnDelete();
             $table->date('tanggal_pinjam');
             $table->date('tanggal_jatuh_tempo');
-            $table->enum('status', ['Dipinjam', 'Dikembalikan', 'Terlambat'])->default('Dipinjam');
+            $table->enum('status', ['dipinjam', 'dikembalikan', 'terlambat'])->default('dipinjam');
+            $table->text('catatan')->nullable();
             $table->timestamps();
         });
     }

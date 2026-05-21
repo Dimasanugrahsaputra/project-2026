@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Peminjaman extends Model
 {
     protected $table = 'peminjamans';
 
     protected $fillable = [
+        'petugas_id',
         'kode_peminjaman',
         'anggota_id',
         'tanggal_pinjam',
@@ -23,6 +25,11 @@ class Peminjaman extends Model
         'tanggal_jatuh_tempo' => 'date',
     ];
 
+    public function petugas(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'petugas_id');
+    }
+
     public function anggota(): BelongsTo
     {
         return $this->belongsTo(Anggota::class, 'anggota_id');
@@ -33,13 +40,8 @@ class Peminjaman extends Model
         return $this->hasMany(DetailPeminjaman::class, 'peminjaman_id');
     }
 
-    public function detailPeminjamans(): HasMany
+    public function pengembalianBuku(): HasOne
     {
-        return $this->hasMany(DetailPeminjaman::class, 'peminjaman_id');
-    }
-
-    public function pengembalianBuku(): HasMany
-    {
-        return $this->hasMany(PengembalianBuku::class, 'peminjaman_id');
+        return $this->hasOne(PengembalianBuku::class, 'peminjaman_id');
     }
 }

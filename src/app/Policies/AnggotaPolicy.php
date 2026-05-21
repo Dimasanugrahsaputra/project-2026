@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Anggota;
 use App\Models\User;
+use App\Models\Anggota;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AnggotaPolicy
@@ -11,98 +11,98 @@ class AnggotaPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list anggota.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_anggota');
     }
 
     /**
-     * Izinkan melihat detail anggota.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('view_anggota');
     }
 
     /**
-     * Izinkan membuat anggota.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_anggota');
     }
 
     /**
-     * Izinkan edit anggota.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('update_anggota');
     }
 
     /**
-     * Izinkan hapus anggota.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('delete_anggota');
     }
 
     /**
-     * Izinkan hapus banyak anggota.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_anggota');
     }
 
     /**
-     * Izinkan hapus permanen.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak data.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore anggota.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak anggota.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi anggota.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, Anggota $anggota): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder anggota.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }

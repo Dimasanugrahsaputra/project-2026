@@ -4,11 +4,14 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\AnggotaResource\Pages;
 use App\Models\Anggota;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class AnggotaResource extends Resource
 {
@@ -24,7 +27,29 @@ class AnggotaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Anggota';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
+
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->check();
+    }
 
     public static function form(Form $form): Form
     {
@@ -32,24 +57,50 @@ class AnggotaResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Data Anggota')
                     ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('User')
-                            ->relationship('user', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->unique(ignoreRecord: true),
-
                         Forms\Components\TextInput::make('kode_anggota')
                             ->label('Kode Anggota')
+                            ->default(fn () => 'AGT-' . now()->format('YmdHis'))
+                            ->disabled()
+                            ->dehydrated()
                             ->required()
-                            ->unique(ignoreRecord: true)
+                            ->unique(
+                                table: 'anggotas',
+                                column: 'kode_anggota',
+                                ignoreRecord: true
+                            )
                             ->maxLength(255),
+
+                        Forms\Components\Select::make('user_id')
+                            ->label('User')
+                            ->relationship(
+                                name: 'user',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, ?Anggota $record = null): Builder {
+                                    return $query
+                                        ->whereDoesntHave('anggota', function (Builder $query) use ($record) {
+                                            if ($record) {
+                                                $query->where('id', '!=', $record->id);
+                                            }
+                                        })
+                                        ->orderBy('name');
+                                }
+                            )
+                            ->getOptionLabelFromRecordUsing(function (User $record): string {
+                                return "{$record->name} - {$record->email}";
+                            })
+                            ->searchable(['name', 'email'])
+                            ->preload()
+                            ->required()
+                            ->unique(
+                                table: 'anggotas',
+                                column: 'user_id',
+                                ignoreRecord: true
+                            ),
 
                         Forms\Components\DatePicker::make('tanggal_bergabung')
                             ->label('Tanggal Bergabung')
-                            ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->required(),
 
                         Forms\Components\Select::make('status')
                             ->label('Status')
@@ -57,8 +108,8 @@ class AnggotaResource extends Resource
                                 'aktif' => 'Aktif',
                                 'nonaktif' => 'Nonaktif',
                             ])
-                            ->required()
-                            ->default('aktif'),
+                            ->default('aktif')
+                            ->required(),
                     ])
                     ->columns(2),
             ]);
@@ -81,36 +132,52 @@ class AnggotaResource extends Resource
                 Tables\Columns\TextColumn::make('user.email')
                     ->label('Email')
                     ->searchable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('tanggal_bergabung')
                     ->label('Tanggal Bergabung')
                     ->date('d M Y')
                     ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'success' => 'aktif',
-                        'danger' => 'nonaktif',
-                    ])
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'aktif' => 'Aktif',
+                        'nonaktif' => 'Nonaktif',
+                        default => '-',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'aktif' => 'success',
+                        'nonaktif' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diubah')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
+                    ->label('Filter Status')
                     ->options([
                         'aktif' => 'Aktif',
                         'nonaktif' => 'Nonaktif',
                     ]),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
+
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -118,8 +185,10 @@ class AnggotaResource extends Resource
                     ->label('Hapus'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->label('Hapus Data Terpilih'),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Hapus Data Terpilih'),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -129,6 +198,7 @@ class AnggotaResource extends Resource
         return [
             'index' => Pages\ListAnggotas::route('/'),
             'create' => Pages\CreateAnggota::route('/create'),
+            'view' => Pages\ViewAnggota::route('/{record}'),
             'edit' => Pages\EditAnggota::route('/{record}/edit'),
         ];
     }

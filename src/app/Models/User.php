@@ -5,6 +5,7 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -17,10 +18,6 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'phone',
-        'address',
-        'role',
-        'status',
     ];
 
     protected $hidden = [
@@ -38,25 +35,11 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return in_array($this->role, [
-            'admin',
-            'petugas',
-            'kepala_perpustakaan',
-        ]) && $this->status === 'aktif';
+        return $this->hasAnyRole(['admin', 'petugas']);
     }
 
-    public function anggota()
+    public function anggota(): HasOne
     {
         return $this->hasOne(Anggota::class);
-    }
-
-    public function peminjamanYangDitangani()
-    {
-        return $this->hasMany(Peminjaman::class, 'petugas_id');
-    }
-
-    public function pengembalianYangDitangani()
-    {
-        return $this->hasMany(PengembalianBuku::class, 'petugas_id');
     }
 }

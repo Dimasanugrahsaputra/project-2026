@@ -26,6 +26,33 @@ class KategoriBukuResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        return true;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return true;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return true;
+    }
+
+    public static function canView($record): bool
+    {
+        return true;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -36,7 +63,7 @@ class KategoriBukuResource extends Resource
                             ->label('Kode Kategori')
                             ->default(fn () => 'KTG-' . now()->format('YmdHis'))
                             ->disabled()
-                            ->dehydrated(true)
+                            ->dehydrated()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
@@ -86,9 +113,6 @@ class KategoriBukuResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->label('Lihat'),
@@ -107,13 +131,13 @@ class KategoriBukuResource extends Resource
             ]);
     }
 
-  public static function getPages(): array
-{
-    return [
-        'index' => Pages\ListKategoriBukus::route('/'),
-        'create' => Pages\CreateKategoriBuku::route('/create'),
-        'view' => Pages\ViewKategoriBuku::route('/{record}'),
-        'edit' => Pages\EditKategoriBuku::route('/{record}/edit'),
-    ];
-}
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListKategoriBukus::route('/'),
+            'create' => Pages\CreateKategoriBuku::route('/create'),
+            'view' => Pages\ViewKategoriBuku::route('/{record}'),
+            'edit' => Pages\EditKategoriBuku::route('/{record}/edit'),
+        ];
+    }
 }

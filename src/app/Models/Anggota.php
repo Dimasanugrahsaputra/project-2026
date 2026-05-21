@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Anggota extends Model
 {
-    protected $table = 'anggotas';
-
     protected $fillable = [
         'user_id',
         'kode_anggota',
@@ -15,17 +14,8 @@ class Anggota extends Model
         'status',
     ];
 
-    protected $casts = [
-        'tanggal_bergabung' => 'date',
-    ];
-
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function peminjamen()
-    {
-        return $this->hasMany(Peminjaman::class, 'anggota_id');
     }
 }

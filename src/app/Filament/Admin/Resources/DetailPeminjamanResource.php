@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class DetailPeminjamanResource extends Resource
 {
@@ -27,6 +28,28 @@ class DetailPeminjamanResource extends Resource
     protected static ?string $pluralModelLabel = 'Detail Peminjaman';
 
     protected static ?int $navigationSort = 2;
+
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        return true;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return true;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return true;
+    }
 
     public static function form(Form $form): Form
     {
@@ -84,7 +107,7 @@ class DetailPeminjamanResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('buku.judul_buku')
-                    ->label('Buku')
+                    ->label('Judul Buku')
                     ->searchable()
                     ->sortable(),
 
@@ -97,10 +120,14 @@ class DetailPeminjamanResource extends Resource
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diubah')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),

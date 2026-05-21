@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Denda;
 use App\Models\User;
+use App\Models\Denda;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class DendaPolicy
@@ -11,98 +11,98 @@ class DendaPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list denda.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_denda');
     }
 
     /**
-     * Izinkan melihat detail denda.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('view_denda');
     }
 
     /**
-     * Izinkan membuat denda.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_denda');
     }
 
     /**
-     * Izinkan edit denda.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('update_denda');
     }
 
     /**
-     * Izinkan hapus denda.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('delete_denda');
     }
 
     /**
-     * Izinkan hapus banyak denda.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_denda');
     }
 
     /**
-     * Izinkan hapus permanen denda.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak denda.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore denda.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak denda.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi denda.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, Denda $denda): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder denda.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }

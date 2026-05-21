@@ -16,15 +16,37 @@ class RakBukuResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     protected static ?string $navigationLabel = 'Rak Buku';
 
     protected static ?string $modelLabel = 'Rak Buku';
 
     protected static ?string $pluralModelLabel = 'Rak Buku';
 
-    protected static ?string $navigationGroup = 'Master Data';
-
     protected static ?int $navigationSort = 2;
+
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        return true;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return true;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return true;
+    }
 
     public static function form(Form $form): Form
     {
@@ -32,15 +54,20 @@ class RakBukuResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Informasi Rak Buku')
                     ->schema([
+                        Forms\Components\TextInput::make('kode_rak')
+                            ->label('Kode Rak')
+                            ->default(fn () => 'RAK-' . now()->format('YmdHis'))
+                            ->required()
+                            ->unique(
+                                table: 'rak_bukus',
+                                column: 'kode_rak',
+                                ignoreRecord: true
+                            )
+                            ->maxLength(255),
+
                         Forms\Components\TextInput::make('nama_rak')
                             ->label('Nama Rak')
                             ->required()
-                            ->maxLength(255),
-
-                        Forms\Components\TextInput::make('kode_rak')
-                            ->label('Kode Rak')
-                            ->required()
-                            ->unique(ignoreRecord: true)
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('lokasi_rak')
@@ -68,7 +95,8 @@ class RakBukuResource extends Resource
                 Tables\Columns\TextColumn::make('lokasi_rak')
                     ->label('Lokasi Rak')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
@@ -97,7 +125,8 @@ class RakBukuResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Hapus Terpilih'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array

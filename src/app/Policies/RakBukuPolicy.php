@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\RakBuku;
 use App\Models\User;
+use App\Models\RakBuku;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RakBukuPolicy
@@ -11,98 +11,98 @@ class RakBukuPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list rak buku.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_rak::buku');
     }
 
     /**
-     * Izinkan melihat detail rak buku.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('view_rak::buku');
     }
 
     /**
-     * Izinkan membuat rak buku.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_rak::buku');
     }
 
     /**
-     * Izinkan edit rak buku.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('update_rak::buku');
     }
 
     /**
-     * Izinkan hapus rak buku.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('delete_rak::buku');
     }
 
     /**
-     * Izinkan hapus banyak rak buku.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_rak::buku');
     }
 
     /**
-     * Izinkan hapus permanen rak buku.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak rak buku.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore rak buku.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak rak buku.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi rak buku.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, RakBuku $rakBuku): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder rak buku.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }

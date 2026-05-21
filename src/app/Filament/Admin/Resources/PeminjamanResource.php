@@ -3,15 +3,16 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\PeminjamanResource\Pages;
+use App\Models\Anggota;
+use App\Models\Buku;
 use App\Models\Peminjaman;
-use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class PeminjamanResource extends Resource
 {
@@ -29,30 +30,59 @@ class PeminjamanResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->check();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make('Informasi Peminjaman')
                     ->schema([
-                        Forms\Components\Hidden::make('petugas_id')
-                    ->default(fn () => Auth::id())
-                    ->dehydrated(),
-
-                       Forms\Components\TextInput::make('kode_peminjaman')
-                    ->label('Kode Peminjaman')
-                    ->required()
-                    ->default(fn () => 'PMJ-' . now()->format('YmdHis') . '-' . rand(100, 999))
-                    ->unique(table: 'peminjamans', column: 'kode_peminjaman', ignoreRecord: true)
-                    ->maxLength(255),
+                        Forms\Components\TextInput::make('kode_peminjaman')
+                            ->label('Kode Peminjaman')
+                            ->default(fn () => 'PMJ-' . now()->format('YmdHis') . '-' . rand(100, 999))
+                            ->required()
+                            ->readOnly()
+                            ->dehydrated()
+                            ->maxLength(255),
 
                         Forms\Components\Select::make('anggota_id')
                             ->label('Anggota')
-                            ->relationship('anggota', 'kode_anggota')
-                            ->getOptionLabelFromRecordUsing(function ($record): string {
-                                $namaUser = $record->user?->name ?? '-';
+                            ->options(function () {
+                                return Anggota::query()
+                                    ->with('user')
+                                    ->where('status', 'aktif')
+                                    ->orderBy('kode_anggota')
+                                    ->get()
+                                    ->mapWithKeys(function (Anggota $anggota) {
+                                        $nama = $anggota->user?->name ?? 'Tanpa Nama';
+                                        $email = $anggota->user?->email ?? '-';
 
-                                return "{$record->kode_anggota} - {$namaUser}";
+                                        return [
+                                            $anggota->id => "{$anggota->kode_anggota} - {$nama} - {$email}",
+                                        ];
+                                    })
+                                    ->toArray();
                             })
                             ->searchable()
                             ->preload()
@@ -61,13 +91,7 @@ class PeminjamanResource extends Resource
                         Forms\Components\DatePicker::make('tanggal_pinjam')
                             ->label('Tanggal Pinjam')
                             ->default(now())
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, $state): void {
-                            if ($state) {
-                            $set('tanggal_jatuh_tempo', Carbon::parse($state)->addDays(7)->format('Y-m-d'));
-                            }
-                            }),
+                            ->required(),
 
                         Forms\Components\DatePicker::make('tanggal_jatuh_tempo')
                             ->label('Tanggal Jatuh Tempo')
@@ -94,13 +118,20 @@ class PeminjamanResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('buku_id')
                                     ->label('Buku')
-                                    ->relationship('buku', 'judul_buku')
-                                    ->getOptionLabelFromRecordUsing(function ($record): string {
-                                        return "{$record->kode_buku} - {$record->judul_buku}";
+                                    ->options(function () {
+                                        return Buku::query()
+                                            ->where('stok', '>', 0)
+                                            ->orderBy('judul_buku')
+                                            ->get()
+                                            ->mapWithKeys(function (Buku $buku) {
+                                                return [
+                                                    $buku->id => "{$buku->kode_buku} - {$buku->judul_buku} | Stok: {$buku->stok}",
+                                                ];
+                                            })
+                                            ->toArray();
                                     })
                                     ->searchable()
                                     ->preload()
-                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->required(),
 
                                 Forms\Components\TextInput::make('jumlah')
@@ -111,9 +142,9 @@ class PeminjamanResource extends Resource
                                     ->required(),
                             ])
                             ->columns(2)
-                            ->defaultItems(1)
                             ->minItems(1)
-                            ->addActionLabel('Add to daftar Buku')
+                            ->defaultItems(1)
+                            ->addActionLabel('Tambah Buku')
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -122,19 +153,20 @@ class PeminjamanResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                return $query->with([
+                    'anggota.user',
+                    'detailPeminjaman.buku',
+                ]);
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('kode_peminjaman')
                     ->label('Kode Peminjaman')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('anggota.kode_anggota')
+                Tables\Columns\TextColumn::make('anggota.user.name')
                     ->label('Anggota')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('petugas.name')
-                    ->label('Petugas')
                     ->searchable()
                     ->sortable(),
 
@@ -148,22 +180,35 @@ class PeminjamanResource extends Resource
                     ->date('d M Y')
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('daftar_buku')
+                    ->label('Buku Dipinjam')
+                    ->getStateUsing(function (Peminjaman $record): string {
+                        return $record->detailPeminjaman
+                            ->map(function ($detail) {
+                                $judul = $detail->buku?->judul_buku ?? '-';
+                                $jumlah = $detail->jumlah ?? 0;
+
+                                return "{$judul} ({$jumlah})";
+                            })
+                            ->implode(', ');
+                    })
+                    ->wrap(),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'dipinjam' => 'Dipinjam',
-                        'dikembalikan' => 'Dikembalikan',
-                        'terlambat' => 'Terlambat',
-                        default => ucfirst($state),
-                    })
                     ->color(fn (string $state): string => match ($state) {
                         'dipinjam' => 'warning',
                         'dikembalikan' => 'success',
                         'terlambat' => 'danger',
                         default => 'gray',
                     })
-                    ->sortable(),
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'dipinjam' => 'Dipinjam',
+                        'dikembalikan' => 'Dikembalikan',
+                        'terlambat' => 'Terlambat',
+                        default => ucfirst($state),
+                    }),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat Pada')
@@ -191,8 +236,10 @@ class PeminjamanResource extends Resource
                     ->label('Hapus'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->label('Hapus Data Terpilih'),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Hapus Terpilih'),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -200,14 +247,10 @@ class PeminjamanResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPeminjamen::route('/'),
+            'index' => Pages\ListPeminjaman::route('/'),
             'create' => Pages\CreatePeminjaman::route('/create'),
+            'view' => Pages\ViewPeminjaman::route('/{record}'),
             'edit' => Pages\EditPeminjaman::route('/{record}/edit'),
         ];
-    }
-
-    private static function generateKodePeminjaman(): string
-    {
-        return 'PMJ-' . now()->format('YmdHis') . '-' . random_int(100, 999);
     }
 }

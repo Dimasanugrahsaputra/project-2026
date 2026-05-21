@@ -2,23 +2,16 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Admin\Resources\AnggotaResource;
-use App\Filament\Admin\Resources\BukuResource;
-use App\Filament\Admin\Resources\DendaResource;
-use App\Filament\Admin\Resources\DetailPeminjamanResource;
-use App\Filament\Admin\Resources\KategoriBukuResource;
-use App\Filament\Admin\Resources\PeminjamanResource;
-use App\Filament\Admin\Resources\PengembalianBukuResource;
-use App\Filament\Admin\Resources\RakBukuResource;
-use App\Filament\Admin\Resources\UserResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -40,29 +33,43 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
 
-            // Dashboard bawaan Filament
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Manajemen Pengguna')
+                    ->collapsible(false),
+
+                NavigationGroup::make()
+                    ->label('Master Data')
+                    ->collapsible(false),
+
+                NavigationGroup::make()
+                    ->label('Transaksi')
+                    ->collapsible(false),
+            ])
+
+            ->discoverResources(
+                in: app_path('Filament/Admin/Resources'),
+                for: 'App\\Filament\\Admin\\Resources'
+            )
+
+            ->discoverPages(
+                in: app_path('Filament/Admin/Pages'),
+                for: 'App\\Filament\\Admin\\Pages'
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])
 
-            // Daftarkan resource manual agar pasti muncul di sidebar
-            ->resources([
-                AnggotaResource::class,
-                BukuResource::class,
-                DendaResource::class,
-                DetailPeminjamanResource::class,
-                KategoriBukuResource::class,
-                PeminjamanResource::class,
-                PengembalianBukuResource::class,
-                RakBukuResource::class,
-                UserResource::class,
-            ])
-
-            // Widget dashboard
             ->discoverWidgets(
                 in: app_path('Filament/Admin/Widgets'),
                 for: 'App\\Filament\\Admin\\Widgets'
             )
+
+            ->widgets([
+                Widgets\AccountWidget::class,
+                Widgets\FilamentInfoWidget::class,
+            ])
 
             ->middleware([
                 EncryptCookies::class,

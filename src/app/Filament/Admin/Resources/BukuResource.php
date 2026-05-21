@@ -26,6 +26,13 @@ class BukuResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    protected static bool $shouldRegisterNavigation = true;
+
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -77,7 +84,7 @@ class BukuResource extends Resource
                             ->numeric()
                             ->required()
                             ->minValue(1900)
-                            ->maxValue(date('Y')),
+                            ->maxValue((int) date('Y')),
 
                         Forms\Components\TextInput::make('isbn')
                             ->label('ISBN')
@@ -156,9 +163,6 @@ class BukuResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 

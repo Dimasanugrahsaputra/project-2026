@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\DetailPeminjaman;
 use App\Models\User;
+use App\Models\DetailPeminjaman;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class DetailPeminjamanPolicy
@@ -11,98 +11,98 @@ class DetailPeminjamanPolicy
     use HandlesAuthorization;
 
     /**
-     * Izinkan melihat menu/list detail peminjaman.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_any_detail::peminjaman');
     }
 
     /**
-     * Izinkan melihat detail data.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('view_detail::peminjaman');
     }
 
     /**
-     * Izinkan membuat detail peminjaman.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('create_detail::peminjaman');
     }
 
     /**
-     * Izinkan edit detail peminjaman.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('update_detail::peminjaman');
     }
 
     /**
-     * Izinkan hapus detail peminjaman.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('delete_detail::peminjaman');
     }
 
     /**
-     * Izinkan hapus banyak detail peminjaman.
+     * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
     {
-        return true;
+        return $user->can('delete_any_detail::peminjaman');
     }
 
     /**
-     * Izinkan hapus permanen.
+     * Determine whether the user can permanently delete.
      */
     public function forceDelete(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
-     * Izinkan hapus permanen banyak data.
+     * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
-     * Izinkan restore.
+     * Determine whether the user can restore.
      */
     public function restore(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('{{ Restore }}');
     }
 
     /**
-     * Izinkan restore banyak data.
+     * Determine whether the user can bulk restore.
      */
     public function restoreAny(User $user): bool
     {
-        return true;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
-     * Izinkan duplikasi data.
+     * Determine whether the user can replicate.
      */
     public function replicate(User $user, DetailPeminjaman $detailPeminjaman): bool
     {
-        return true;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
-     * Izinkan reorder data.
+     * Determine whether the user can reorder.
      */
     public function reorder(User $user): bool
     {
-        return true;
+        return $user->can('{{ Reorder }}');
     }
 }
