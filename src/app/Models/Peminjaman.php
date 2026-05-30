@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Peminjaman extends Model
 {
@@ -12,11 +13,12 @@ class Peminjaman extends Model
 
     protected $fillable = [
         'petugas_id',
-        'kode_peminjaman',
         'anggota_id',
+        'kode_peminjaman',
         'tanggal_pinjam',
         'tanggal_jatuh_tempo',
         'status',
+        'catatan',
     ];
 
     protected $casts = [
@@ -42,5 +44,10 @@ class Peminjaman extends Model
     public function detailPeminjamans(): HasMany
     {
         return $this->hasMany(DetailPeminjaman::class, 'peminjaman_id');
+    }
+
+    public function pengembalianBuku(): HasOne
+    {
+        return $this->hasOne(PengembalianBuku::class, 'peminjaman_id');
     }
 }

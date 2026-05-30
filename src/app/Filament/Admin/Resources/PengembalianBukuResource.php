@@ -10,8 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
 class PengembalianBukuResource extends Resource
 {
@@ -29,121 +27,92 @@ class PengembalianBukuResource extends Resource
 
     protected static ?string $slug = 'pengembalian-buku';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
-    protected static bool $shouldRegisterNavigation = true;
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
 
     public static function canViewAny(): bool
     {
-        return auth()->check();
+        return true;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->check();
+        return true;
     }
 
-    public static function canEdit(Model $record): bool
+    public static function canEdit($record): bool
     {
-        return auth()->check();
+        return true;
     }
 
-    public static function canDelete(Model $record): bool
+    public static function canDelete($record): bool
     {
-        return auth()->check();
+        return true;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return true;
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Pengembalian Buku')
-                    ->schema([
-                        Forms\Components\TextInput::make('kode_pengembalian')
-                            ->label('Kode Pengembalian')
-                            ->default(fn () => 'PGB-' . now()->format('YmdHis'))
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                Forms\Components\TextInput::make('kode_pengembalian')
+                    ->label('Kode Pengembalian')
+                    ->default(fn () => 'KMB-' . now()->format('YmdHis'))
+                    ->required()
+                    ->maxLength(255),
 
-                        Forms\Components\Select::make('peminjaman_id')
-                            ->label('Peminjaman')
-                            ->options(function (?PengembalianBuku $record): array {
-                                return Peminjaman::query()
-                                    ->with(['anggota.user'])
-                                    ->when(
-                                        $record?->peminjaman_id,
-                                        function (Builder $query) use ($record) {
-                                            $query->where(function (Builder $query) use ($record) {
-                                                $query
-                                                    ->where(function (Builder $query) {
-                                                        $query
-                                                            ->whereIn('status', ['dipinjam', 'terlambat'])
-                                                            ->whereDoesntHave('pengembalianBuku');
-                                                    })
-                                                    ->orWhere('id', $record->peminjaman_id);
-                                            });
-                                        },
-                                        function (Builder $query) {
-                                            $query
-                                                ->whereIn('status', ['dipinjam', 'terlambat'])
-                                                ->whereDoesntHave('pengembalianBuku');
-                                        }
-                                    )
-                                    ->latest('id')
-                                    ->get()
-                                    ->mapWithKeys(function (Peminjaman $peminjaman): array {
-                                        $namaAnggota = $peminjaman->anggota?->user?->name ?? '-';
-                                        $kodePeminjaman = $peminjaman->kode_peminjaman ?? '-';
-                                        $tanggalJatuhTempo = $peminjaman->tanggal_jatuh_tempo ?? '-';
-
-                                        return [
-                                            $peminjaman->id => "{$kodePeminjaman} - {$namaAnggota} - Jatuh Tempo: {$tanggalJatuhTempo}",
-                                        ];
-                                    })
-                                    ->toArray();
-                            })
-                            ->getOptionLabelUsing(function ($value): ?string {
-                                $peminjaman = Peminjaman::query()
-                                    ->with(['anggota.user'])
-                                    ->find($value);
-
-                                if (! $peminjaman) {
-                                    return null;
-                                }
-
+                Forms\Components\Select::make('peminjaman_id')
+                    ->label('Peminjaman')
+                    ->options(function () {
+                        return Peminjaman::query()
+                            ->with(['anggota.user'])
+                            ->whereIn('status', ['dipinjam', 'terlambat'])
+                            ->whereDoesntHave('pengembalianBuku')
+                            ->latest('id')
+                            ->get()
+                            ->mapWithKeys(function (Peminjaman $peminjaman) {
                                 $namaAnggota = $peminjaman->anggota?->user?->name ?? '-';
                                 $kodePeminjaman = $peminjaman->kode_peminjaman ?? '-';
-                                $tanggalJatuhTempo = $peminjaman->tanggal_jatuh_tempo ?? '-';
+                                $tanggalJatuhTempo = $peminjaman->tanggal_jatuh_tempo
+                                    ? $peminjaman->tanggal_jatuh_tempo->format('d M Y')
+                                    : '-';
 
-                                return "{$kodePeminjaman} - {$namaAnggota} - Jatuh Tempo: {$tanggalJatuhTempo}";
+                                return [
+                                    $peminjaman->id => "{$kodePeminjaman} - {$namaAnggota} - Jatuh Tempo: {$tanggalJatuhTempo}",
+                                ];
                             })
-                            ->searchable()
-                            ->preload()
-                            ->required(),
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required(),
 
-                        Forms\Components\DatePicker::make('tanggal_pengembalian')
-                            ->label('Tanggal Pengembalian')
-                            ->default(now())
-                            ->native(false)
-                            ->required(),
+                Forms\Components\DatePicker::make('tanggal_pengembalian')
+                    ->label('Tanggal Pengembalian')
+                    ->default(now())
+                    ->required(),
 
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options([
-                                'tepat_waktu' => 'Tepat Waktu',
-                                'terlambat' => 'Terlambat',
-                            ])
-                            ->default('tepat_waktu')
-                            ->required(),
-
-                        Forms\Components\Textarea::make('catatan')
-                            ->label('Catatan')
-                            ->rows(4)
-                            ->columnSpanFull()
-                            ->nullable(),
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->options([
+                        'tepat waktu' => 'Tepat Waktu',
+                        'terlambat' => 'Terlambat',
                     ])
-                    ->columns(2),
+                    ->default('tepat waktu')
+                    ->required(),
+
+                Forms\Components\Textarea::make('catatan')
+                    ->label('Catatan')
+                    ->rows(3)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -164,7 +133,7 @@ class PengembalianBukuResource extends Resource
                 Tables\Columns\TextColumn::make('peminjaman.anggota.user.name')
                     ->label('Anggota')
                     ->searchable()
-                    ->sortable(),
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('tanggal_pengembalian')
                     ->label('Tanggal Pengembalian')
@@ -174,34 +143,23 @@ class PengembalianBukuResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'tepat_waktu' => 'Tepat Waktu',
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'tepat waktu' => 'Tepat Waktu',
                         'terlambat' => 'Terlambat',
-                        default => $state,
+                        default => $state ?? '-',
                     })
-                    ->color(fn (string $state): string => match ($state) {
-                        'tepat_waktu' => 'success',
+                    ->color(fn (?string $state): string => match ($state) {
+                        'tepat waktu' => 'success',
                         'terlambat' => 'danger',
                         default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('catatan')
                     ->label('Catatan')
-                    ->limit(40)
-                    ->toggleable(),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'tepat_waktu' => 'Tepat Waktu',
-                        'terlambat' => 'Terlambat',
-                    ]),
+                    ->limit(30)
+                    ->default('-'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -214,12 +172,7 @@ class PengembalianBukuResource extends Resource
                         ->label('Hapus Terpilih'),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
+            ->defaultSort('id', 'desc');
     }
 
     public static function getPages(): array
@@ -227,7 +180,6 @@ class PengembalianBukuResource extends Resource
         return [
             'index' => Pages\ListPengembalianBukus::route('/'),
             'create' => Pages\CreatePengembalianBuku::route('/create'),
-            'view' => Pages\ViewPengembalianBuku::route('/{record}'),
             'edit' => Pages\EditPengembalianBuku::route('/{record}/edit'),
         ];
     }

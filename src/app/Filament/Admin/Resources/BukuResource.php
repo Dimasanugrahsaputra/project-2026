@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Resources\BukuResource\Api\Transformers\BukuTransformer;
 use App\Filament\Admin\Resources\BukuResource\Pages;
 use App\Models\Buku;
 use Filament\Forms;
@@ -30,6 +31,11 @@ class BukuResource extends Resource
     protected static ?int $navigationSort = 3;
 
     protected static bool $shouldRegisterNavigation = true;
+
+    public static function getApiTransformer()
+    {
+        return BukuTransformer::class;
+    }
 
     public static function canViewAny(): bool
     {
@@ -73,7 +79,7 @@ class BukuResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
 
-                        Forms\Components\TextInput::make('judul')
+                        Forms\Components\TextInput::make('judul_buku')
                             ->label('Judul Buku')
                             ->required()
                             ->maxLength(255),
@@ -109,12 +115,21 @@ class BukuResource extends Resource
                             ->minValue(1900)
                             ->maxValue((int) now()->format('Y')),
 
+                        Forms\Components\TextInput::make('isbn')
+                            ->label('ISBN')
+                            ->maxLength(255),
+
                         Forms\Components\TextInput::make('stok')
                             ->label('Stok')
                             ->numeric()
                             ->required()
                             ->minValue(0)
                             ->default(0),
+
+                        Forms\Components\Textarea::make('deskripsi')
+                            ->label('Deskripsi')
+                            ->rows(4)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
             ]);
@@ -135,7 +150,7 @@ class BukuResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('judul')
+                Tables\Columns\TextColumn::make('judul_buku')
                     ->label('Judul Buku')
                     ->searchable()
                     ->sortable(),

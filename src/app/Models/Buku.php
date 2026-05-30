@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Buku extends Model
@@ -13,7 +14,7 @@ class Buku extends Model
         'kategori_buku_id',
         'rak_buku_id',
         'kode_buku',
-        'judul',
+        'judul_buku',
         'penulis',
         'penerbit',
         'tahun_terbit',
@@ -28,8 +29,23 @@ class Buku extends Model
         'stok' => 'integer',
     ];
 
+    public function kategoriBuku(): BelongsTo
+    {
+        return $this->belongsTo(KategoriBuku::class, 'kategori_buku_id');
+    }
+
+    public function rakBuku(): BelongsTo
+    {
+        return $this->belongsTo(RakBuku::class, 'rak_buku_id');
+    }
+
     public function detailPeminjaman(): HasMany
     {
         return $this->hasMany(DetailPeminjaman::class, 'buku_id');
+    }
+
+    public function getJudulAttribute(): ?string
+    {
+        return $this->judul_buku;
     }
 }
