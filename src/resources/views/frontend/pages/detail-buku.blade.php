@@ -1,201 +1,121 @@
-@php
-    use Illuminate\Support\Facades\Storage;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $buku->judul_buku }} - Detail Buku</title>
 
-    $judul = $buku->judul ?? $buku->judul_buku ?? $buku->nama_buku ?? 'Judul Buku';
-    $kode = $buku->kode_buku ?? '-';
-    $penulis = $buku->penulis ?? '-';
-    $penerbit = $buku->penerbit ?? '-';
-    $tahun = $buku->tahun_terbit ?? $buku->tahun ?? '-';
-    $isbn = $buku->isbn ?? '-';
-    $stok = $buku->stok ?? 0;
-    $deskripsi = $buku->deskripsi ?? 'Deskripsi buku belum tersedia.';
-@endphp
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+    <nav class="bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold">Perpustakaan Digital</h1>
+                <p class="text-sm text-slate-300">Sistem Informasi Peminjaman Buku Online</p>
+            </div>
 
-<div class="min-h-screen bg-slate-50">
-    <section class="mx-auto max-w-7xl px-6 py-10">
-        <a href="{{ route('frontend.buku') }}" class="mb-6 inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
-            ← Kembali ke Daftar Buku
+            <a href="/admin"
+               class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
+                Login Admin
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-10">
+        <a href="{{ route('katalog.index') }}"
+           class="inline-block mb-6 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold transition">
+            ← Kembali ke Katalog
         </a>
 
-        <div class="grid gap-8 lg:grid-cols-[1fr_420px]">
-            <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                <div class="grid gap-8 md:grid-cols-[340px_1fr]">
-                    <div class="rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 p-8">
-                        @if (! empty($buku->cover))
-                            <img
-                                src="{{ Storage::url($buku->cover) }}"
-                                alt="{{ $judul }}"
-                                class="mx-auto h-[420px] w-full rounded-2xl object-cover shadow-xl"
-                            >
-                        @else
-                            <div class="flex h-[420px] items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl">
-                                <div class="text-center">
-                                    <div class="text-7xl">📘</div>
-                                    <div class="mt-4 font-bold">Cover Buku</div>
-                                </div>
-                            </div>
-                        @endif
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                <div class="bg-slate-200 min-h-[500px] flex items-center justify-center">
+                    <img
+                        src="{{ $buku->cover ?: 'https://placehold.co/700x900/e2e8f0/334155?text=Cover+Buku' }}"
+                        alt="{{ $buku->judul_buku }}"
+                        class="w-full h-full object-cover"
+                        onerror="this.src='https://placehold.co/700x900/e2e8f0/334155?text=Cover+Buku'"
+                    >
+                </div>
+
+                <div class="p-8">
+                    <div class="mb-4">
+                        <span class="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
+                            {{ $buku->kode_buku ?? 'Kode belum tersedia' }}
+                        </span>
                     </div>
 
-                    <div>
-                        <span class="inline-flex rounded-full bg-blue-50 px-5 py-2 text-sm font-bold text-blue-600">
-                            {{ $kode }}
+                    <h2 class="text-3xl font-bold mb-4">
+                        {{ $buku->judul_buku }}
+                    </h2>
+
+                    @if((int) $buku->stok > 0)
+                        <span class="inline-block mb-6 px-5 py-2 rounded-full bg-emerald-100 text-emerald-700 font-bold">
+                            Tersedia: {{ $buku->stok }}
                         </span>
+                    @else
+                        <span class="inline-block mb-6 px-5 py-2 rounded-full bg-red-100 text-red-700 font-bold">
+                            Stok Habis
+                        </span>
+                    @endif
 
-                        <h1 class="mt-6 text-4xl font-black text-slate-950">
-                            {{ $judul }}
-                        </h1>
-
-                        <div class="mt-8 space-y-4 text-slate-700">
-                            <p><strong class="text-slate-950">Penulis:</strong> {{ $penulis }}</p>
-                            <p><strong class="text-slate-950">Penerbit:</strong> {{ $penerbit }}</p>
-                            <p><strong class="text-slate-950">Tahun Terbit:</strong> {{ $tahun }}</p>
-                            <p><strong class="text-slate-950">ISBN:</strong> {{ $isbn }}</p>
+                    <div class="space-y-4 text-sm md:text-base">
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">Penulis</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->penulis ?? '-' }}</div>
                         </div>
 
-                        <div class="mt-6">
-                            <span class="inline-flex rounded-full bg-emerald-100 px-6 py-3 font-black text-emerald-700">
-                                Stok: {{ $stok }}
-                            </span>
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">Penerbit</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->penerbit ?? '-' }}</div>
                         </div>
 
-                        <div class="mt-10">
-                            <h2 class="text-xl font-black text-slate-950">Deskripsi</h2>
-                            <p class="mt-3 leading-7 text-slate-600">
-                                {{ $deskripsi }}
-                            </p>
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">Tahun Terbit</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->tahun_terbit ?? '-' }}</div>
                         </div>
+
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">ISBN</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->isbn ?? '-' }}</div>
+                        </div>
+
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">Kategori</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->kategoriBuku?->nama_kategori ?? '-' }}</div>
+                        </div>
+
+                        <div class="flex border-b border-slate-200 pb-3">
+                            <div class="w-40 font-bold text-slate-800">Rak Buku</div>
+                            <div class="flex-1 text-slate-700">{{ $buku->rakBuku?->nama_rak ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-3">Deskripsi Buku</h3>
+                        <p class="text-slate-700 leading-relaxed">
+                            {{ $buku->deskripsi ?? 'Belum ada deskripsi buku.' }}
+                        </p>
+                    </div>
+
+                    <div class="mt-8 p-5 rounded-2xl bg-blue-50 border border-blue-100">
+                        <h3 class="font-bold text-blue-800 mb-2">Informasi Peminjaman</h3>
+                        <p class="text-blue-700 text-sm leading-relaxed">
+                            Peminjaman buku dilakukan secara langsung di perpustakaan.
+                            Pengunjung dapat melihat informasi buku melalui website, kemudian datang ke perpustakaan untuk melakukan peminjaman.
+                            Transaksi peminjaman akan dicatat oleh admin atau petugas perpustakaan.
+                        </p>
                     </div>
                 </div>
             </div>
+        </section>
+    </main>
 
-            <div class="h-fit rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-                <h2 class="text-2xl font-black text-slate-950">Booking Buku</h2>
-
-                <p class="mt-2 text-slate-600">
-                    Isi data berikut untuk mengajukan peminjaman buku.
-                </p>
-
-                @if ($successMessage)
-                    <div class="mt-6 rounded-2xl bg-emerald-100 p-4 font-semibold text-emerald-700">
-                        {{ $successMessage }}
-                    </div>
-                @endif
-
-                @if ($errorMessage)
-                    <div class="mt-6 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
-                        {{ $errorMessage }}
-                    </div>
-                @endif
-
-                @error('booking')
-                    <div class="mt-6 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
-                        {{ $message }}
-                    </div>
-                @enderror
-
-                <form wire:submit.prevent="booking" class="mt-7 space-y-5">
-                    <div>
-                        <label class="mb-2 block font-bold text-slate-700">Nama Lengkap</label>
-                        <input
-                            type="text"
-                            wire:model="nama_lengkap"
-                            class="w-full rounded-2xl border border-slate-300 px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            placeholder="Masukkan nama lengkap"
-                        >
-                        @error('nama_lengkap')
-                            <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block font-bold text-slate-700">Email</label>
-                        <input
-                            type="email"
-                            wire:model="email"
-                            class="w-full rounded-2xl border border-slate-300 px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            placeholder="email@gmail.com"
-                        >
-                        @error('email')
-                            <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block font-bold text-slate-700">No HP</label>
-                        <input
-                            type="text"
-                            wire:model="no_hp"
-                            class="w-full rounded-2xl border border-slate-300 px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            placeholder="08xxxxxxxxxx"
-                        >
-                        @error('no_hp')
-                            <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block font-bold text-slate-700">Alamat</label>
-                        <textarea
-                            wire:model="alamat"
-                            rows="4"
-                            class="w-full rounded-2xl border border-slate-300 px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            placeholder="Masukkan alamat"
-                        ></textarea>
-                        @error('alamat')
-                            <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block font-bold text-slate-700">Jumlah</label>
-                        <input
-                            type="number"
-                            min="1"
-                            wire:model="jumlah"
-                            class="w-full rounded-2xl border border-slate-300 px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        >
-                        @error('jumlah')
-                            <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="mb-2 block font-bold text-slate-700">Tanggal Pinjam</label>
-                            <input
-                                type="date"
-                                wire:model="tanggal_pinjam"
-                                class="w-full rounded-2xl border border-slate-300 px-4 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            >
-                            @error('tanggal_pinjam')
-                                <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block font-bold text-slate-700">Jatuh Tempo</label>
-                            <input
-                                type="date"
-                                wire:model="tanggal_jatuh_tempo"
-                                class="w-full rounded-2xl border border-slate-300 px-4 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            >
-                            @error('tanggal_jatuh_tempo')
-                                <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        wire:loading.attr="disabled"
-                        class="w-full rounded-2xl bg-blue-600 px-6 py-4 font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        <span wire:loading.remove>Ajukan Booking</span>
-                        <span wire:loading>Memproses...</span>
-                    </button>
-                </form>
-            </div>
+    <footer class="mt-10 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-slate-300">
+            © {{ date('Y') }} Perpustakaan Digital - Sistem Informasi Peminjaman Buku Online
         </div>
-    </section>
-</div>
+    </footer>
+</body>
+</html>

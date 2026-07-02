@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\BukuResource\Api\Transformers\BukuTransformer;
 use App\Filament\Admin\Resources\BukuResource\Pages;
 use App\Models\Buku;
 use Filament\Forms;
@@ -30,31 +29,39 @@ class BukuResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    protected static bool $shouldRegisterNavigation = true;
-
-    public static function getApiTransformer()
+    public static function shouldRegisterNavigation(): bool
     {
-        return BukuTransformer::class;
+        return true;
     }
 
     public static function canViewAny(): bool
     {
-        return auth()->check();
+        return true;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return true;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->check();
+        return true;
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->check();
+        return true;
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->check();
+        return true;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return true;
     }
 
     public static function form(Form $form): Form
@@ -63,27 +70,53 @@ class BukuResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Informasi Buku')
                     ->schema([
-                        Forms\Components\FileUpload::make('cover')
-                            ->label('Cover Buku')
-                            ->image()
-                            ->disk('public')
-                            ->directory('covers/buku')
-                            ->visibility('public')
-                            ->imageEditor()
-                            ->columnSpanFull(),
-
                         Forms\Components\TextInput::make('kode_buku')
                             ->label('Kode Buku')
-                            ->default(fn () => 'BK' . now()->format('YmdHis'))
                             ->required()
+                            ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true),
+                            ->placeholder('Contoh: BK001'),
 
                         Forms\Components\TextInput::make('judul_buku')
                             ->label('Judul Buku')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->placeholder('Contoh: Belajar Laravel'),
 
+                        Forms\Components\TextInput::make('penulis')
+                            ->label('Penulis')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Contoh: Dimas'),
+
+                        Forms\Components\TextInput::make('penerbit')
+                            ->label('Penerbit')
+                            ->maxLength(255)
+                            ->placeholder('Contoh: Gramedia'),
+
+                        Forms\Components\TextInput::make('tahun_terbit')
+                            ->label('Tahun Terbit')
+                            ->numeric()
+                            ->minValue(1900)
+                            ->maxValue((int) date('Y'))
+                            ->placeholder('Contoh: 2024'),
+
+                        Forms\Components\TextInput::make('isbn')
+                            ->label('ISBN')
+                            ->maxLength(255)
+                            ->placeholder('Contoh: 978-602-1234-56-7'),
+
+                        Forms\Components\TextInput::make('stok')
+                            ->label('Stok')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->minValue(0),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Kategori dan Lokasi')
+                    ->schema([
                         Forms\Components\Select::make('kategori_buku_id')
                             ->label('Kategori Buku')
                             ->relationship('kategoriBuku', 'nama_kategori')
@@ -97,41 +130,22 @@ class BukuResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
+                    ])
+                    ->columns(2),
 
-                        Forms\Components\TextInput::make('penulis')
-                            ->label('Penulis')
-                            ->required()
-                            ->maxLength(255),
-
-                        Forms\Components\TextInput::make('penerbit')
-                            ->label('Penerbit')
-                            ->required()
-                            ->maxLength(255),
-
-                        Forms\Components\TextInput::make('tahun_terbit')
-                            ->label('Tahun Terbit')
-                            ->numeric()
-                            ->required()
-                            ->minValue(1900)
-                            ->maxValue((int) now()->format('Y')),
-
-                        Forms\Components\TextInput::make('isbn')
-                            ->label('ISBN')
-                            ->maxLength(255),
-
-                        Forms\Components\TextInput::make('stok')
-                            ->label('Stok')
-                            ->numeric()
-                            ->required()
-                            ->minValue(0)
-                            ->default(0),
+                Forms\Components\Section::make('Cover dan Deskripsi')
+                    ->schema([
+                        Forms\Components\TextInput::make('cover')
+                            ->label('URL Cover Buku')
+                            ->url()
+                            ->maxLength(1000)
+                            ->placeholder('https://contoh.com/cover-buku.jpg'),
 
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi')
-                            ->rows(4)
+                            ->rows(5)
                             ->columnSpanFull(),
-                    ])
-                    ->columns(2),
+                    ]),
             ]);
     }
 
@@ -139,49 +153,49 @@ class BukuResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('cover')
-                    ->label('Cover')
-                    ->disk('public')
-                    ->square()
-                    ->defaultImageUrl(url('/images/default-book.png')),
-
                 Tables\Columns\TextColumn::make('kode_buku')
-                    ->label('Kode Buku')
+                    ->label('Kode')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('judul_buku')
                     ->label('Judul Buku')
                     ->searchable()
+                    ->sortable()
+                    ->limit(35),
+
+                Tables\Columns\TextColumn::make('penulis')
+                    ->label('Penulis')
+                    ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('kategoriBuku.nama_kategori')
                     ->label('Kategori')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('rakBuku.nama_rak')
                     ->label('Rak')
                     ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('penulis')
-                    ->label('Penulis')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('penerbit')
-                    ->label('Penerbit')
-                    ->searchable(),
+                    ->sortable()
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('tahun_terbit')
                     ->label('Tahun')
-                    ->sortable(),
+                    ->sortable()
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('stok')
                     ->label('Stok')
                     ->badge()
-                    ->color(fn ($state) => $state > 0 ? 'success' : 'danger')
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn ($state): string => (int) $state > 0 ? 'success' : 'danger'),
+
+                Tables\Columns\TextColumn::make('isbn')
+                    ->label('ISBN')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
@@ -199,6 +213,9 @@ class BukuResource extends Resource
                     ->relationship('rakBuku', 'nama_rak'),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
+
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -219,6 +236,7 @@ class BukuResource extends Resource
         return [
             'index' => Pages\ListBukus::route('/'),
             'create' => Pages\CreateBuku::route('/create'),
+            'view' => Pages\ViewBuku::route('/{record}'),
             'edit' => Pages\EditBuku::route('/{record}/edit'),
         ];
     }

@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class DendaResource extends Resource
 {
@@ -26,28 +27,43 @@ class DendaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Denda';
 
+    protected static ?string $slug = 'dendas';
+
     protected static ?int $navigationSort = 5;
 
-    protected static bool $shouldRegisterNavigation = true;
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
 
     public static function canViewAny(): bool
     {
-        return auth()->check();
+        return true;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return true;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->check();
+        return true;
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->check();
+        return true;
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->check();
+        return true;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return true;
     }
 
     public static function form(Form $form): Form
@@ -58,27 +74,16 @@ class DendaResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('kode_denda')
                             ->label('Kode Denda')
-                            ->default(fn () => self::generateKodeDenda())
+                            ->default(fn () => 'DND-' . now()->format('YmdHis'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\Select::make('pengembalian_buku_id')
                             ->label('Pengembalian Buku')
-                            ->options(function (?Denda $record) {
+                            ->options(function () {
                                 return PengembalianBuku::query()
-                                    ->with([
-                                        'peminjaman.anggota.user',
-                                    ])
-                                    ->when($record, function ($query) use ($record) {
-                                        $query->where(function ($query) use ($record) {
-                                            $query
-                                                ->whereDoesntHave('denda')
-                                                ->orWhere('id', $record->pengembalian_buku_id);
-                                        });
-                                    }, function ($query) {
-                                        $query->whereDoesntHave('denda');
-                                    })
-                                    ->latest()
+                                    ->with(['peminjaman.anggota.user'])
+                                    ->latest('id')
                                     ->get()
                                     ->mapWithKeys(function (PengembalianBuku $pengembalian) {
                                         $kodePengembalian = $pengembalian->kode_pengembalian ?? '-';
@@ -88,7 +93,8 @@ class DendaResource extends Resource
                                         return [
                                             $pengembalian->id => "{$kodePengembalian} - {$kodePeminjaman} - {$namaAnggota}",
                                         ];
-                                    });
+                                    })
+                                    ->toArray();
                             })
                             ->searchable()
                             ->preload()
@@ -96,11 +102,23 @@ class DendaResource extends Resource
 
                         Forms\Components\TextInput::make('jumlah_denda')
                             ->label('Jumlah Denda')
-                            ->numeric()
                             ->prefix('Rp')
-                            ->default(0)
+                            ->numeric()
                             ->required()
                             ->minValue(0),
+
+                        Forms\Components\TextInput::make('jumlah_dibayar')
+                            ->label('Jumlah Dibayar')
+                            ->prefix('Rp')
+                            ->numeric()
+                            ->default(0)
+                            ->required()
+                            ->minValue(0)
+                            ->helperText('Isi sesuai nominal pembayaran. Jika sama dengan jumlah denda, status akan menjadi lunas.'),
+
+                        Forms\Components\DatePicker::make('tanggal_pembayaran')
+                            ->label('Tanggal Pembayaran')
+                            ->helperText('Boleh dikosongkan. Jika jumlah dibayar lebih dari 0, sistem akan mengisi otomatis.'),
 
                         Forms\Components\Select::make('status')
                             ->label('Status')
@@ -108,8 +126,19 @@ class DendaResource extends Resource
                                 'belum_dibayar' => 'Belum Dibayar',
                                 'sudah_dibayar' => 'Sudah Dibayar',
                             ])
-                            ->default('belum_dibayar')
-                            ->required(),
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->helperText('Status diatur otomatis berdasarkan jumlah dibayar.'),
+
+                        Forms\Components\Select::make('status_pembayaran')
+                            ->label('Status Pembayaran')
+                            ->options([
+                                'belum_lunas' => 'Belum Lunas',
+                                'lunas' => 'Lunas',
+                            ])
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->helperText('Status pembayaran diatur otomatis berdasarkan jumlah denda dan jumlah dibayar.'),
 
                         Forms\Components\Textarea::make('catatan')
                             ->label('Catatan')
@@ -132,55 +161,70 @@ class DendaResource extends Resource
                 Tables\Columns\TextColumn::make('pengembalianBuku.kode_pengembalian')
                     ->label('Kode Pengembalian')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('pengembalianBuku.peminjaman.kode_peminjaman')
                     ->label('Kode Peminjaman')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('pengembalianBuku.peminjaman.anggota.user.name')
                     ->label('Anggota')
                     ->searchable()
-                    ->sortable(),
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('jumlah_denda')
                     ->label('Jumlah Denda')
                     ->money('IDR')
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('jumlah_dibayar')
+                    ->label('Jumlah Dibayar')
+                    ->money('IDR')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'belum_dibayar' => 'Belum Dibayar',
                         'sudah_dibayar' => 'Sudah Dibayar',
-                        default => $state,
+                        default => $state ?? '-',
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'belum_dibayar' => 'danger',
                         'sudah_dibayar' => 'success',
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'belum_dibayar' => 'Belum Dibayar',
-                        'sudah_dibayar' => 'Sudah Dibayar',
-                    ]),
+                Tables\Columns\TextColumn::make('status_pembayaran')
+                    ->label('Status Pembayaran')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'belum_lunas' => 'Belum Lunas',
+                        'lunas' => 'Lunas',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'belum_lunas' => 'warning',
+                        'lunas' => 'success',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('tanggal_pembayaran')
+                    ->label('Tanggal Bayar')
+                    ->formatStateUsing(function ($state): string {
+                        if (blank($state) || $state === '-') {
+                            return '-';
+                        }
+
+                        return Carbon::parse($state)->format('d M Y');
+                    })
+                    ->sortable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
                 Tables\Actions\EditAction::make()
                     ->label('Edit'),
 
@@ -192,7 +236,8 @@ class DendaResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Hapus Terpilih'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('id', 'desc');
     }
 
     public static function getPages(): array
@@ -200,13 +245,7 @@ class DendaResource extends Resource
         return [
             'index' => Pages\ListDendas::route('/'),
             'create' => Pages\CreateDenda::route('/create'),
-            'view' => Pages\ViewDenda::route('/{record}'),
             'edit' => Pages\EditDenda::route('/{record}/edit'),
         ];
-    }
-
-    private static function generateKodeDenda(): string
-    {
-        return 'DND-' . now()->format('YmdHis');
     }
 }

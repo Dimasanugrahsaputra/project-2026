@@ -23,7 +23,7 @@ class Denda extends Model
     protected $casts = [
         'jumlah_denda' => 'decimal:2',
         'jumlah_dibayar' => 'decimal:2',
-        'tanggal_pembayaran' => 'datetime',
+        'tanggal_pembayaran' => 'date',
     ];
 
     protected static function booted(): void
@@ -32,13 +32,17 @@ class Denda extends Model
             $jumlahDenda = (float) ($denda->jumlah_denda ?? 0);
             $jumlahDibayar = (float) ($denda->jumlah_dibayar ?? 0);
 
-            $denda->status = $jumlahDibayar > 0
-                ? 'sudah_dibayar'
-                : 'belum_dibayar';
+            if ($jumlahDibayar > 0) {
+                $denda->status = 'sudah_dibayar';
+            } else {
+                $denda->status = 'belum_dibayar';
+            }
 
-            $denda->status_pembayaran = $jumlahDenda > 0 && $jumlahDibayar >= $jumlahDenda
-                ? 'lunas'
-                : 'belum_lunas';
+            if ($jumlahDenda > 0 && $jumlahDibayar >= $jumlahDenda) {
+                $denda->status_pembayaran = 'lunas';
+            } else {
+                $denda->status_pembayaran = 'belum_lunas';
+            }
 
             if ($jumlahDibayar > 0 && empty($denda->tanggal_pembayaran)) {
                 $denda->tanggal_pembayaran = now();
