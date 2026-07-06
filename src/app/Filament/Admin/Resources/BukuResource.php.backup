@@ -121,20 +121,14 @@ class BukuResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('kategori_buku_id')
                             ->label('Kategori Buku')
-                            ->relationship(
-                                'kategoriBuku',
-                                'nama_kategori'
-                            )
+                            ->relationship('kategoriBuku', 'nama_kategori')
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         Forms\Components\Select::make('rak_buku_id')
                             ->label('Rak Buku')
-                            ->relationship(
-                                'rakBuku',
-                                'nama_rak'
-                            )
+                            ->relationship('rakBuku', 'nama_rak')
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -143,18 +137,6 @@ class BukuResource extends Resource
 
                 Forms\Components\Section::make('Cover dan Deskripsi')
                     ->schema([
-                        Forms\Components\TextInput::make('cover_url')
-                            ->label('URL Cover Buku')
-                            ->url()
-                            ->maxLength(1000)
-                            ->placeholder(
-                                'https://contoh.com/cover-buku.jpg'
-                            )
-                            ->helperText(
-                                'Kosongkan jika menggunakan gambar yang diunggah dari komputer.'
-                            )
-                            ->columnSpanFull(),
-
                         Forms\Components\FileUpload::make('cover')
                             ->label('Gambar Cover Buku')
                             ->image()
@@ -171,17 +153,12 @@ class BukuResource extends Resource
                             ->imagePreviewHeight('300')
                             ->openable()
                             ->downloadable()
-                            ->helperText(
-                                'Unggah JPG, PNG, atau WebP. Maksimal 2 MB. Gambar upload akan diprioritaskan.'
-                            )
-                            ->columnSpanFull(),
+                            ->helperText('Unggah gambar JPG, PNG, atau WebP. Maksimal 2 MB.'),
 
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi Buku')
                             ->rows(6)
-                            ->placeholder(
-                                'Masukkan deskripsi buku...'
-                            )
+                            ->placeholder('Masukkan deskripsi buku...')
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -193,44 +170,20 @@ class BukuResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('cover')
                     ->label('Cover')
-                    ->getStateUsing(
-                        function (Buku $record): ?string {
-                            /*
-                             * Prioritas pertama:
-                             * gambar yang diunggah dari komputer.
-                             */
-                            if (filled($record->cover)) {
-                                /*
-                                 * Tetap mendukung data lama apabila
-                                 * kolom cover pernah berisi URL.
-                                 */
-                                if (
-                                    Str::startsWith(
-                                        $record->cover,
-                                        [
-                                            'http://',
-                                            'https://',
-                                        ]
-                                    )
-                                ) {
-                                    return $record->cover;
-                                }
-
-                                return Storage::disk('public')
-                                    ->url($record->cover);
-                            }
-
-                            /*
-                             * Prioritas kedua:
-                             * URL cover dari kolom cover_url.
-                             */
-                            if (filled($record->cover_url)) {
-                                return $record->cover_url;
-                            }
-
+                    ->getStateUsing(function (Buku $record): ?string {
+                        if (blank($record->cover)) {
                             return null;
                         }
-                    )
+
+                        if (Str::startsWith($record->cover, [
+                            'http://',
+                            'https://',
+                        ])) {
+                            return $record->cover;
+                        }
+
+                        return Storage::disk('public')->url($record->cover);
+                    })
                     ->height(70)
                     ->width(50)
                     ->extraImgAttributes([
@@ -253,17 +206,13 @@ class BukuResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make(
-                    'kategoriBuku.nama_kategori'
-                )
+                Tables\Columns\TextColumn::make('kategoriBuku.nama_kategori')
                     ->label('Kategori')
                     ->searchable()
                     ->sortable()
                     ->default('-'),
 
-                Tables\Columns\TextColumn::make(
-                    'rakBuku.nama_rak'
-                )
+                Tables\Columns\TextColumn::make('rakBuku.nama_rak')
                     ->label('Rak')
                     ->searchable()
                     ->sortable()
@@ -287,36 +236,22 @@ class BukuResource extends Resource
                 Tables\Columns\TextColumn::make('isbn')
                     ->label('ISBN')
                     ->searchable()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->sortable()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make(
-                    'kategori_buku_id'
-                )
+                Tables\Filters\SelectFilter::make('kategori_buku_id')
                     ->label('Kategori')
-                    ->relationship(
-                        'kategoriBuku',
-                        'nama_kategori'
-                    ),
+                    ->relationship('kategoriBuku', 'nama_kategori'),
 
-                Tables\Filters\SelectFilter::make(
-                    'rak_buku_id'
-                )
+                Tables\Filters\SelectFilter::make('rak_buku_id')
                     ->label('Rak')
-                    ->relationship(
-                        'rakBuku',
-                        'nama_rak'
-                    ),
+                    ->relationship('rakBuku', 'nama_rak'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
@@ -343,9 +278,7 @@ class BukuResource extends Resource
             'index' => Pages\ListBukus::route('/'),
             'create' => Pages\CreateBuku::route('/create'),
             'view' => Pages\ViewBuku::route('/{record}'),
-            'edit' => Pages\EditBuku::route(
-                '/{record}/edit'
-            ),
+            'edit' => Pages\EditBuku::route('/{record}/edit'),
         ];
     }
 }
