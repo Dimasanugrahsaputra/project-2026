@@ -1,121 +1,176 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $buku->judul_buku }} - Detail Buku</title>
+@extends('frontend.layouts.app')
 
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-900">
-    <nav class="bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold">Perpustakaan Digital</h1>
-                <p class="text-sm text-slate-300">Sistem Informasi Peminjaman Buku Online</p>
-            </div>
+@section('title', $buku->judul_buku . ' - Detail Buku')
 
-            <a href="/admin"
-               class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-                Login Admin
-            </a>
-        </div>
-    </nav>
+@section('content')
+@php
+    $coverUrl = null;
 
-    <main class="max-w-6xl mx-auto px-6 py-10">
-        <a href="{{ route('katalog.index') }}"
-           class="inline-block mb-6 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold transition">
+    if (filled($buku->cover)) {
+        if (
+            str_starts_with($buku->cover, 'http://') ||
+            str_starts_with($buku->cover, 'https://')
+        ) {
+            $coverUrl = $buku->cover;
+        } elseif (str_starts_with($buku->cover, 'storage/')) {
+            $coverUrl = asset($buku->cover);
+        } else {
+            $coverUrl = asset(
+                'storage/' . ltrim($buku->cover, '/')
+            );
+        }
+    }
+@endphp
+
+<div class="min-h-screen bg-slate-100">
+    <section class="mx-auto max-w-6xl px-6 py-8">
+        <a
+            href="{{ route('katalog.index') }}"
+            class="mb-6 inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+        >
             ← Kembali ke Katalog
         </a>
 
-        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
-                <div class="bg-slate-200 min-h-[500px] flex items-center justify-center">
+        <div class="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
+            <div class="min-h-[600px] bg-slate-200">
+                @if ($coverUrl)
                     <img
-                        src="{{ $buku->cover ?: 'https://placehold.co/700x900/e2e8f0/334155?text=Cover+Buku' }}"
-                        alt="{{ $buku->judul_buku }}"
-                        class="w-full h-full object-cover"
-                        onerror="this.src='https://placehold.co/700x900/e2e8f0/334155?text=Cover+Buku'"
+                        src="{{ $coverUrl }}"
+                        alt="Cover {{ $buku->judul_buku }}"
+                        class="h-full min-h-[600px] w-full object-cover"
                     >
-                </div>
+                @else
+                    <div class="flex min-h-[600px] items-center justify-center px-8 text-center">
+                        <span class="text-3xl font-semibold text-slate-600">
+                            Cover belum tersedia
+                        </span>
+                    </div>
+                @endif
+            </div>
 
-                <div class="p-8">
-                    <div class="mb-4">
-                        <span class="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
-                            {{ $buku->kode_buku ?? 'Kode belum tersedia' }}
+            <div class="p-8 lg:p-10">
+                <span class="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
+                    {{ $buku->kode_buku }}
+                </span>
+
+                <h1 class="mt-4 text-3xl font-bold text-slate-900">
+                    {{ $buku->judul_buku }}
+                </h1>
+
+                <span
+                    @class([
+                        'mt-4 inline-flex rounded-full px-4 py-2 text-sm font-bold',
+                        'bg-emerald-100 text-emerald-700' => $buku->stok > 0,
+                        'bg-red-100 text-red-700' => $buku->stok <= 0,
+                    ])
+                >
+                    {{ $buku->stok > 0
+                        ? 'Tersedia: ' . $buku->stok
+                        : 'Stok Habis' }}
+                </span>
+
+                <div class="mt-8 divide-y divide-slate-200 border-y border-slate-200">
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            Penulis
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->penulis ?: '-' }}
                         </span>
                     </div>
 
-                    <h2 class="text-3xl font-bold mb-4">
-                        {{ $buku->judul_buku }}
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            Penerbit
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->penerbit ?: '-' }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            Tahun Terbit
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->tahun_terbit ?: '-' }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            ISBN
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->isbn ?: '-' }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            Kategori
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->kategoriBuku?->nama_kategori ?: '-' }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-4">
+                        <span class="font-bold text-slate-900">
+                            Rak Buku
+                        </span>
+
+                        <span class="text-slate-600">
+                            {{ $buku->rakBuku?->nama_rak ?: '-' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h2 class="text-xl font-bold text-slate-900">
+                        Deskripsi Buku
                     </h2>
 
-                    @if((int) $buku->stok > 0)
-                        <span class="inline-block mb-6 px-5 py-2 rounded-full bg-emerald-100 text-emerald-700 font-bold">
-                            Tersedia: {{ $buku->stok }}
-                        </span>
+                    <p class="mt-3 whitespace-pre-line leading-7 text-slate-600">
+                        {{ $buku->deskripsi ?: 'Belum ada deskripsi buku.' }}
+                    </p>
+                </div>
+
+                <div class="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                    <h2 class="font-bold text-blue-900">
+                        Informasi Booking
+                    </h2>
+
+                    <p class="mt-2 text-sm leading-6 text-blue-700">
+                        Booking merupakan pemesanan sementara.
+                        Buku tetap harus diambil langsung di perpustakaan
+                        sebelum tanggal booking kedaluwarsa.
+                    </p>
+
+                    @if ($buku->stok > 0)
+                        <a
+                            href="{{ route('booking.create', $buku) }}"
+                            class="mt-5 inline-flex w-full justify-center rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700"
+                        >
+                            Booking Buku Ini
+                        </a>
                     @else
-                        <span class="inline-block mb-6 px-5 py-2 rounded-full bg-red-100 text-red-700 font-bold">
-                            Stok Habis
-                        </span>
+                        <button
+                            type="button"
+                            disabled
+                            class="mt-5 w-full cursor-not-allowed rounded-xl bg-slate-300 px-6 py-3 font-bold text-slate-500"
+                        >
+                            Buku Tidak Tersedia
+                        </button>
                     @endif
-
-                    <div class="space-y-4 text-sm md:text-base">
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">Penulis</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->penulis ?? '-' }}</div>
-                        </div>
-
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">Penerbit</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->penerbit ?? '-' }}</div>
-                        </div>
-
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">Tahun Terbit</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->tahun_terbit ?? '-' }}</div>
-                        </div>
-
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">ISBN</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->isbn ?? '-' }}</div>
-                        </div>
-
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">Kategori</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->kategoriBuku?->nama_kategori ?? '-' }}</div>
-                        </div>
-
-                        <div class="flex border-b border-slate-200 pb-3">
-                            <div class="w-40 font-bold text-slate-800">Rak Buku</div>
-                            <div class="flex-1 text-slate-700">{{ $buku->rakBuku?->nama_rak ?? '-' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-8">
-                        <h3 class="text-xl font-bold mb-3">Deskripsi Buku</h3>
-                        <p class="text-slate-700 leading-relaxed">
-                            {{ $buku->deskripsi ?? 'Belum ada deskripsi buku.' }}
-                        </p>
-                    </div>
-
-                    <div class="mt-8 p-5 rounded-2xl bg-blue-50 border border-blue-100">
-                        <h3 class="font-bold text-blue-800 mb-2">Informasi Peminjaman</h3>
-                        <p class="text-blue-700 text-sm leading-relaxed">
-                            Peminjaman buku dilakukan secara langsung di perpustakaan.
-                            Pengunjung dapat melihat informasi buku melalui website, kemudian datang ke perpustakaan untuk melakukan peminjaman.
-                            Transaksi peminjaman akan dicatat oleh admin atau petugas perpustakaan.
-                        </p>
-                    </div>
                 </div>
             </div>
-        </section>
-    </main>
-
-    <footer class="mt-10 bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-slate-300">
-            © {{ date('Y') }} Perpustakaan Digital - Sistem Informasi Peminjaman Buku Online
         </div>
-    </footer>
-</body>
-</html>
+    </section>
+</div>
+@endsection

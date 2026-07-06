@@ -1,132 +1,207 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Katalog Buku - Perpustakaan Digital</title>
+@extends('frontend.layouts.app')
 
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-900">
-    <nav class="bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold">Perpustakaan Digital</h1>
-                <p class="text-sm text-slate-300">Sistem Informasi Peminjaman Buku Online</p>
-            </div>
+@section('title', 'Katalog Buku - Perpustakaan Digital')
 
-            <a href="/admin"
-               class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-                Login Admin
-            </a>
-        </div>
-    </nav>
+@section('content')
+<div class="min-h-screen bg-slate-100">
+    <section class="mx-auto max-w-6xl px-6 py-8">
+        <div class="mb-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h1 class="text-3xl font-bold text-slate-900">
+                Katalog Buku
+            </h1>
 
-    <main class="max-w-7xl mx-auto px-6 py-10">
-        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 mb-8">
-            <h2 class="text-3xl font-bold mb-3">Katalog Buku</h2>
-            <p class="text-slate-600 leading-relaxed">
+            <p class="mt-3 text-sm leading-6 text-slate-600">
                 Cari dan lihat koleksi buku yang tersedia di perpustakaan.
-                Pengunjung dapat melihat daftar buku tanpa harus login.
-                Proses peminjaman tetap dilakukan secara langsung di perpustakaan.
+                Buku yang tersedia dapat dipesan sementara melalui fitur booking.
             </p>
-        </section>
+        </div>
 
-        <form action="{{ route('katalog.index') }}" method="GET" class="mb-8">
-            <div class="flex flex-col md:flex-row gap-3">
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ $search ?? '' }}"
-                    placeholder="Cari judul, kode buku, penulis, penerbit, atau ISBN..."
-                    class="w-full px-5 py-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <form
+            action="{{ route('katalog.index') }}"
+            method="GET"
+            class="mb-7 flex flex-col gap-3 sm:flex-row"
+        >
+            <input
+                type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Cari judul, kode buku, penulis, penerbit, kategori, rak, atau ISBN..."
+                class="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            >
+
+            <button
+                type="submit"
+                class="rounded-xl bg-blue-600 px-7 py-3 text-sm font-bold text-white hover:bg-blue-700"
+            >
+                Cari
+            </button>
+
+            @if (request()->filled('search'))
+                <a
+                    href="{{ route('katalog.index') }}"
+                    class="rounded-xl bg-slate-700 px-7 py-3 text-center text-sm font-bold text-white hover:bg-slate-800"
                 >
-
-                <button
-                    type="submit"
-                    class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-                    Cari
-                </button>
-
-                @if(!empty($search))
-                    <a href="{{ route('katalog.index') }}"
-                       class="px-6 py-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-semibold transition text-center">
-                        Reset
-                    </a>
-                @endif
-            </div>
+                    Reset
+                </a>
+            @endif
         </form>
 
-        @if($bukus->count())
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                @foreach($bukus as $buku)
-                    <article class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-lg transition">
-                        <div class="h-64 bg-slate-200 overflow-hidden">
-                            <img
-                                src="{{ $buku->cover ?: 'https://placehold.co/600x800/e2e8f0/334155?text=Cover+Buku' }}"
-                                alt="{{ $buku->judul_buku }}"
-                                class="w-full h-full object-cover"
-                                onerror="this.src='https://placehold.co/600x800/e2e8f0/334155?text=Cover+Buku'"
-                            >
-                        </div>
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            @forelse ($bukus as $buku)
+                @php
+                    $coverUrl = null;
 
-                        <div class="p-6">
-                            <div class="mb-3">
-                                <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                                    {{ $buku->kode_buku ?? 'Kode belum tersedia' }}
+                    if (filled($buku->cover)) {
+                        if (
+                            str_starts_with($buku->cover, 'http://'\) ||
+                            str_starts_with($buku->cover, 'https://'\)
+                        ) {
+                            $coverUrl = $buku->cover;
+                        } elseif (str_starts_with($buku->cover, 'storage/')) {
+                            $coverUrl = asset($buku->cover);
+                        } else {
+                            $coverUrl = asset(
+                                'storage/' . ltrim($buku->cover, '/')
+                            );
+                        }
+                    }
+                @endphp
+
+                <article class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                    <div class="relative h-80 overflow-hidden bg-slate-200">
+                        @if ($coverUrl)
+                            <img
+                                src="{{ $coverUrl }}"
+                                alt="Cover {{ $buku->judul_buku }}"
+                                class="h-full w-full object-cover"
+                                onerror="
+                                    this.style.display='none';
+                                    this.nextElementSibling.style.display='flex';
+                                "
+                            >
+
+                            <div class="hidden h-full items-center justify-center px-6 text-center">
+                                <span class="text-xl font-semibold text-slate-600">
+                                    Gambar cover tidak dapat ditampilkan
                                 </span>
                             </div>
-
-                            <h3 class="text-xl font-bold mb-3">
-                                {{ $buku->judul_buku }}
-                            </h3>
-
-                            <div class="space-y-1 text-sm text-slate-600 mb-5">
-                                <p><span class="font-semibold text-slate-800">Penulis:</span> {{ $buku->penulis ?? '-' }}</p>
-                                <p><span class="font-semibold text-slate-800">Penerbit:</span> {{ $buku->penerbit ?? '-' }}</p>
-                                <p><span class="font-semibold text-slate-800">Tahun:</span> {{ $buku->tahun_terbit ?? '-' }}</p>
-                                <p><span class="font-semibold text-slate-800">Kategori:</span> {{ $buku->kategoriBuku?->nama_kategori ?? '-' }}</p>
-                                <p><span class="font-semibold text-slate-800">Rak:</span> {{ $buku->rakBuku?->nama_rak ?? '-' }}</p>
+                        @else
+                            <div class="flex h-full items-center justify-center px-6 text-center">
+                                <span class="text-xl font-semibold text-slate-600">
+                                    Cover belum tersedia
+                                </span>
                             </div>
+                        @endif
+                    </div>
 
-                            <div class="flex items-center justify-between gap-3">
-                                @if((int) $buku->stok > 0)
-                                    <span class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold">
-                                        Tersedia: {{ $buku->stok }}
-                                    </span>
-                                @else
-                                    <span class="px-4 py-2 rounded-full bg-red-100 text-red-700 text-sm font-bold">
-                                        Stok Habis
-                                    </span>
-                                @endif
+                    <div class="p-6">
+                        <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            {{ $buku->kode_buku }}
+                        </span>
 
-                                <a href="{{ route('katalog.show', $buku) }}"
-                                   class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition">
+                        <h2 class="mt-3 text-xl font-bold text-slate-900">
+                            {{ $buku->judul_buku }}
+                        </h2>
+
+                        <div class="mt-4 space-y-2 text-sm text-slate-600">
+                            <p>
+                                <span class="font-semibold text-slate-800">
+                                    Penulis:
+                                </span>
+                                {{ $buku->penulis ?: '-' }}
+                            </p>
+
+                            <p>
+                                <span class="font-semibold text-slate-800">
+                                    Penerbit:
+                                </span>
+                                {{ $buku->penerbit ?: '-' }}
+                            </p>
+
+                            <p>
+                                <span class="font-semibold text-slate-800">
+                                    Tahun:
+                                </span>
+                                {{ $buku->tahun_terbit ?: '-' }}
+                            </p>
+
+                            <p>
+                                <span class="font-semibold text-slate-800">
+                                    Kategori:
+                                </span>
+                                {{ $buku->kategoriBuku?->nama_kategori ?: '-' }}
+                            </p>
+
+                            <p>
+                                <span class="font-semibold text-slate-800">
+                                    Rak:
+                                </span>
+                                {{ $buku->rakBuku?->nama_rak ?: '-' }}
+                            </p>
+                        </div>
+
+                        <div class="mt-6">
+                            <span
+                                @class([
+                                    'inline-flex rounded-full px-4 py-2 text-sm font-bold',
+                                    'bg-emerald-100 text-emerald-700' => (int) $buku->stok > 0,
+                                    'bg-red-100 text-red-700' => (int) $buku->stok <= 0,
+                                ])
+                            >
+                                {{ (int) $buku->stok > 0
+                                    ? 'Tersedia: ' . $buku->stok
+                                    : 'Stok Habis' }}
+                            </span>
+
+                            <div class="mt-4 grid grid-cols-2 gap-3">
+                                <a
+                                    href="{{ route('katalog.show', ['buku' => $buku->id]) }}"
+                                    class="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-slate-700"
+                                >
                                     Detail
                                 </a>
+
+                                @if ((int) $buku->stok > 0)
+                                    <a
+                                        href="{{ route('booking.create', ['buku' => $buku->id]) }}"
+                                        class="rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-700"
+                                    >
+                                        Booking Buku
+                                    </a>
+                                @else
+                                    <button
+                                        type="button"
+                                        disabled
+                                        class="cursor-not-allowed rounded-xl bg-slate-300 px-4 py-3 text-sm font-bold text-slate-500"
+                                    >
+                                        Tidak Tersedia
+                                    </button>
+                                @endif
                             </div>
                         </div>
-                    </article>
-                @endforeach
-            </div>
+                    </div>
+                </article>
+            @empty
+                <div class="col-span-full rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+                    <h2 class="text-xl font-bold text-slate-900">
+                        Buku tidak ditemukan
+                    </h2>
 
+                    <p class="mt-2 text-sm text-slate-600">
+                        Data buku belum tersedia atau kata kunci pencarian tidak ditemukan.
+                    </p>
+                </div>
+            @endforelse
+        </div>
+
+        @if (
+            method_exists($bukus, 'hasPages') &&
+            $bukus->hasPages()
+        )
             <div class="mt-10">
                 {{ $bukus->links() }}
             </div>
-        @else
-            <div class="bg-white rounded-3xl border border-slate-200 p-10 text-center">
-                <h3 class="text-xl font-bold mb-2">Buku tidak ditemukan</h3>
-                <p class="text-slate-600">
-                    Data buku belum tersedia atau kata kunci pencarian tidak ditemukan.
-                </p>
-            </div>
         @endif
-    </main>
-
-    <footer class="mt-10 bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-slate-300">
-            © {{ date('Y') }} Perpustakaan Digital - Sistem Informasi Peminjaman Buku Online
-        </div>
-    </footer>
-</body>
-</html>
+    </section>
+</div>
+@endsection

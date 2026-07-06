@@ -31,16 +31,38 @@ class Buku extends Model
 
     public function kategoriBuku(): BelongsTo
     {
-        return $this->belongsTo(KategoriBuku::class, 'kategori_buku_id');
+        return $this->belongsTo(
+            KategoriBuku::class,
+            'kategori_buku_id'
+        );
     }
 
     public function rakBuku(): BelongsTo
     {
-        return $this->belongsTo(RakBuku::class, 'rak_buku_id');
+        return $this->belongsTo(
+            RakBuku::class,
+            'rak_buku_id'
+        );
     }
 
     public function detailPeminjaman(): HasMany
     {
-        return $this->hasMany(DetailPeminjaman::class, 'buku_id');
+        return $this->hasMany(
+            DetailPeminjaman::class,
+            'buku_id'
+        );
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(
+            Booking::class,
+            'buku_id'
+        );
+    }
+
+    public function getJudulAttribute(): ?string
+    {
+        return $this->judul_buku;
     }
 }

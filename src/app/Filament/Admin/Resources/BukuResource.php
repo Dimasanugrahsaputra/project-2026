@@ -10,6 +10,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BukuResource extends Resource
 {
@@ -81,18 +83,18 @@ class BukuResource extends Resource
                             ->label('Judul Buku')
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('Contoh: Belajar Laravel'),
+                            ->placeholder('Contoh: Matematika Kelas X'),
 
                         Forms\Components\TextInput::make('penulis')
                             ->label('Penulis')
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('Contoh: Dimas'),
+                            ->placeholder('Contoh: Tim Kemendikbud'),
 
                         Forms\Components\TextInput::make('penerbit')
                             ->label('Penerbit')
                             ->maxLength(255)
-                            ->placeholder('Contoh: Gramedia'),
+                            ->placeholder('Contoh: Kemendikbud'),
 
                         Forms\Components\TextInput::make('tahun_terbit')
                             ->label('Tahun Terbit')
@@ -135,15 +137,28 @@ class BukuResource extends Resource
 
                 Forms\Components\Section::make('Cover dan Deskripsi')
                     ->schema([
-                        Forms\Components\TextInput::make('cover')
-                            ->label('URL Cover Buku')
-                            ->url()
-                            ->maxLength(1000)
-                            ->placeholder('https://contoh.com/cover-buku.jpg'),
+                        Forms\Components\FileUpload::make('cover')
+                            ->label('Gambar Cover Buku')
+                            ->image()
+                            ->disk('public')
+                            ->directory('covers')
+                            ->visibility('public')
+                            ->acceptedFileTypes([
+                                'image/jpeg',
+                                'image/png',
+                                'image/webp',
+                            ])
+                            ->maxSize(2048)
+                            ->imageEditor()
+                            ->imagePreviewHeight('300')
+                            ->openable()
+                            ->downloadable()
+                            ->helperText('Unggah gambar JPG, PNG, atau WebP. Maksimal 2 MB.'),
 
                         Forms\Components\Textarea::make('deskripsi')
-                            ->label('Deskripsi')
-                            ->rows(5)
+                            ->label('Deskripsi Buku')
+                            ->rows(6)
+                            ->placeholder('Masukkan deskripsi buku...')
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -153,6 +168,28 @@ class BukuResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('cover')
+                    ->label('Cover')
+                    ->getStateUsing(function (Buku $record): ?string {
+                        if (blank($record->cover)) {
+                            return null;
+                        }
+
+                        if (Str::startsWith($record->cover, [
+                            'http://',
+                            'https://',
+                        ])) {
+                            return $record->cover;
+                        }
+
+                        return Storage::disk('public')->url($record->cover);
+                    })
+                    ->height(70)
+                    ->width(50)
+                    ->extraImgAttributes([
+                        'class' => 'object-cover rounded-md',
+                    ]),
+
                 Tables\Columns\TextColumn::make('kode_buku')
                     ->label('Kode')
                     ->searchable()
@@ -190,7 +227,11 @@ class BukuResource extends Resource
                     ->label('Stok')
                     ->badge()
                     ->sortable()
-                    ->color(fn ($state): string => (int) $state > 0 ? 'success' : 'danger'),
+                    ->color(
+                        fn ($state): string => (int) $state > 0
+                            ? 'success'
+                            : 'danger'
+                    ),
 
                 Tables\Columns\TextColumn::make('isbn')
                     ->label('ISBN')
