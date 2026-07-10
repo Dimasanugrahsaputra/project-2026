@@ -18,10 +18,18 @@ class User extends Authenticatable implements FilamentUser
     use HasRoles;
     use Notifiable;
 
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_ANGGOTA = 'anggota';
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'phone',
+        'address',
+        'role',
+        'status',
     ];
 
     protected $hidden = [
@@ -39,11 +47,24 @@ class User extends Authenticatable implements FilamentUser
 
     public function anggota(): HasOne
     {
-        return $this->hasOne(Anggota::class, 'user_id');
+        return $this->hasOne(
+            Anggota::class,
+            'user_id'
+        );
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isAnggota(): bool
+    {
+        return $this->role === self::ROLE_ANGGOTA;
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->isAdmin();
     }
 }

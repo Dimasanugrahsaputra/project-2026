@@ -28,4 +28,13 @@ class Anggota extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function isActive(): bool
+    {
+        return in_array(
+            strtolower((string) $this->status),
+            ['aktif', 'active'],
+            true
+        );
+    }
 }

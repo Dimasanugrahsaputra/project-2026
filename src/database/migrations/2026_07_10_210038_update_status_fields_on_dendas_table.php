@@ -7,6 +7,22 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement(
+            "ALTER TABLE `dendas`
+             MODIFY `status` VARCHAR(30) NULL"
+        );
+
+        DB::statement(
+            "ALTER TABLE `dendas`
+             MODIFY `status_pembayaran` VARCHAR(30) NULL"
+        );
+
+        DB::table('dendas')
+            ->where('status_pembayaran', 'lunas')
+            ->update([
+                'status_pembayaran' => 'sudah_lunas',
+            ]);
+
         DB::table('dendas')
             ->whereNull('status')
             ->update([
@@ -34,6 +50,18 @@ return new class extends Migration
 
     public function down(): void
     {
+        DB::table('dendas')
+            ->where('status_pembayaran', 'sudah_lunas')
+            ->update([
+                'status_pembayaran' => 'lunas',
+            ]);
+
+        DB::table('dendas')
+            ->where('status_pembayaran', 'jatuh_tempo')
+            ->update([
+                'status_pembayaran' => 'belum_lunas',
+            ]);
+
         DB::statement(
             "ALTER TABLE `dendas`
              MODIFY `status` VARCHAR(30)

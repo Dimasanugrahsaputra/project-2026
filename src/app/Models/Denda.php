@@ -14,9 +14,9 @@ class Denda extends Model
         'pengembalian_buku_id',
         'jumlah_denda',
         'jumlah_dibayar',
+        'tanggal_pembayaran',
         'status',
         'status_pembayaran',
-        'tanggal_pembayaran',
         'catatan',
     ];
 
@@ -26,36 +26,11 @@ class Denda extends Model
         'tanggal_pembayaran' => 'date',
     ];
 
-    protected static function booted(): void
-    {
-        static::saving(function (Denda $denda): void {
-            $jumlahDenda = (float) ($denda->jumlah_denda ?? 0);
-            $jumlahDibayar = (float) ($denda->jumlah_dibayar ?? 0);
-
-            if ($jumlahDibayar > 0) {
-                $denda->status = 'sudah_dibayar';
-            } else {
-                $denda->status = 'belum_dibayar';
-            }
-
-            if ($jumlahDenda > 0 && $jumlahDibayar >= $jumlahDenda) {
-                $denda->status_pembayaran = 'lunas';
-            } else {
-                $denda->status_pembayaran = 'belum_lunas';
-            }
-
-            if ($jumlahDibayar > 0 && empty($denda->tanggal_pembayaran)) {
-                $denda->tanggal_pembayaran = now();
-            }
-
-            if ($jumlahDibayar <= 0) {
-                $denda->tanggal_pembayaran = null;
-            }
-        });
-    }
-
     public function pengembalianBuku(): BelongsTo
     {
-        return $this->belongsTo(PengembalianBuku::class, 'pengembalian_buku_id');
+        return $this->belongsTo(
+            PengembalianBuku::class,
+            'pengembalian_buku_id'
+        );
     }
 }
