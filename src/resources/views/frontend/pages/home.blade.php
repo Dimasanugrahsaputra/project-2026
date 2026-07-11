@@ -1,98 +1,237 @@
-<div>
-    <section class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700">
-        <div class="absolute inset-0 opacity-20">
-            <div class="absolute left-20 top-20 h-40 w-40 rounded-full bg-white blur-3xl"></div>
-            <div class="absolute bottom-10 right-20 h-56 w-56 rounded-full bg-cyan-300 blur-3xl"></div>
-        </div>
-
-        <div class="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-5 py-24 lg:grid-cols-2">
-            <div>
-                <div class="mb-5 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white">
-                    Sistem Informasi Perpustakaan
-                </div>
-
-                <h1 class="text-4xl font-extrabold leading-tight text-white md:text-6xl">
-                    Sistem Perpustakaan Digital
-                </h1>
-
-                <p class="mt-5 max-w-xl text-lg leading-8 text-blue-100">
-                    Temukan koleksi buku perpustakaan dengan mudah, cepat, dan tampilan yang modern.
+<x-public-layout
+    title="Beranda"
+    active="beranda"
+>
+    <main>
+        <section class="hero">
+            <div class="container hero-inner">
+                <p class="eyebrow">
+                    Katalog Perpustakaan
                 </p>
 
-                <div class="mt-8 flex gap-4">
-                    <a href="{{ route('frontend.buku') }}"
-                       class="rounded-2xl bg-white px-6 py-3 font-semibold text-blue-700 shadow-lg hover:bg-blue-50">
-                        Lihat Daftar Buku
-                    </a>
+                <h1 class="display">
+                    Temukan buku yang ingin kamu baca.
+                </h1>
 
-                    <a href="{{ url('/admin') }}"
-                       class="rounded-2xl border border-white/40 px-6 py-3 font-semibold text-white hover:bg-white/10">
-                        Login Admin
+                <p class="lead">
+                    Jelajahi koleksi perpustakaan dan
+                    ajukan peminjaman secara online melalui
+                    alur yang jelas dan mudah.
+                </p>
+
+                <form
+                    action="{{ route('katalog.index') }}"
+                    method="GET"
+                    class="search-panel"
+                    role="search"
+                >
+                    <span class="material-symbols-outlined">
+                        search
+                    </span>
+
+                    <input
+                        type="search"
+                        name="search"
+                        placeholder="Cari judul, penulis, penerbit, atau ISBN..."
+                        aria-label="Cari buku"
+                    >
+
+                    <button
+                        type="submit"
+                        class="button button-primary"
+                    >
+                        <span class="material-symbols-outlined">
+                            search
+                        </span>
+
+                        <span>Cari Buku</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">
+                            Jelajahi Koleksi
+                        </p>
+
+                        <h2 class="section-title">
+                            Kategori Populer
+                        </h2>
+                    </div>
+
+                    <a
+                        href="{{ route('katalog.index') }}"
+                        class="text-link"
+                    >
+                        Lihat semua
+
+                        <span class="material-symbols-outlined">
+                            arrow_forward
+                        </span>
                     </a>
                 </div>
-            </div>
 
-            <div class="hidden lg:block">
-                <div class="rounded-[2rem] bg-white/15 p-6 shadow-2xl backdrop-blur">
-                    <div class="grid grid-cols-2 gap-4">
-                        @foreach ($bukus->take(4) as $buku)
-                            <div class="rounded-3xl bg-white p-4 shadow">
-                                <div class="flex h-44 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-6xl">
-                                    📘
-                                </div>
-                                <p class="mt-3 line-clamp-1 font-bold text-slate-800">
-                                    {{ $buku->judul }}
-                                </p>
-                                <p class="text-sm text-slate-500">
-                                    {{ $buku->penulis }}
-                                </p>
-                            </div>
+                <div class="category-grid">
+                    @forelse (
+                        $kategoriPopuler as $kategori
+                    )
+                        <a
+                            href="{{ route('katalog.index', [
+                                'kategori' => $kategori->id,
+                            ]) }}"
+                            class="category-card"
+                        >
+                            <span class="material-symbols-outlined">
+                                menu_book
+                            </span>
+
+                            <strong>
+                                {{ $kategori->nama_kategori }}
+                            </strong>
+                        </a>
+                    @empty
+                        @foreach ([
+                            'Novel',
+                            'Komik',
+                            'Majalah',
+                            'Pelajaran',
+                            'Cerpen',
+                            'Sejarah',
+                        ] as $kategori)
+                            <a
+                                href="{{ route('katalog.index', [
+                                    'search' => $kategori,
+                                ]) }}"
+                                class="category-card"
+                            >
+                                <span class="material-symbols-outlined">
+                                    menu_book
+                                </span>
+
+                                <strong>
+                                    {{ $kategori }}
+                                </strong>
+                            </a>
+                        @endforeach
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">
+                            Koleksi Terkini
+                        </p>
+
+                        <h2 class="section-title">
+                            Buku Terbaru
+                        </h2>
+                    </div>
+
+                    <a
+                        href="{{ route('katalog.index') }}"
+                        class="text-link"
+                    >
+                        Lihat katalog
+
+                        <span class="material-symbols-outlined">
+                            arrow_forward
+                        </span>
+                    </a>
+                </div>
+
+                @if ($bukuTerbaru->isNotEmpty())
+                    <div class="book-grid">
+                        @foreach (
+                            $bukuTerbaru as $buku
+                        )
+                            <x-book-card
+                                :buku="$buku"
+                            />
                         @endforeach
                     </div>
+                @else
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">
+                            library_books
+                        </span>
+
+                        <h3>Belum ada buku</h3>
+
+                        <p>
+                            Koleksi buku terbaru akan muncul
+                            setelah admin menambahkan data buku.
+                        </p>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">
+                            Alur Layanan
+                        </p>
+
+                        <h2 class="section-title">
+                            Cara Meminjam Buku
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="process-grid">
+                    <article class="process-card">
+                        <div class="process-number">
+                            1
+                        </div>
+
+                        <h3>Pilih Buku</h3>
+
+                        <p>
+                            Cari koleksi berdasarkan judul,
+                            penulis, kategori, tahun terbit,
+                            atau ketersediaan stok.
+                        </p>
+                    </article>
+
+                    <article class="process-card">
+                        <div class="process-number">
+                            2
+                        </div>
+
+                        <h3>Ajukan Peminjaman</h3>
+
+                        <p>
+                            Login sebagai anggota, tentukan
+                            tanggal pengambilan, lalu kirim
+                            pengajuan peminjaman.
+                        </p>
+                    </article>
+
+                    <article class="process-card">
+                        <div class="process-number">
+                            3
+                        </div>
+
+                        <h3>Ambil di Perpustakaan</h3>
+
+                        <p>
+                            Datang setelah pengajuan disetujui.
+                            Bukti peminjaman dikirim setelah
+                            buku diserahkan.
+                        </p>
+                    </article>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="mx-auto -mt-10 max-w-7xl px-5">
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div class="rounded-3xl border bg-white p-7 shadow-sm">
-                <p class="text-sm text-slate-500">Total Buku</p>
-                <h2 class="mt-3 text-4xl font-extrabold">{{ $totalBuku }}</h2>
-            </div>
-
-            <div class="rounded-3xl border bg-white p-7 shadow-sm">
-                <p class="text-sm text-slate-500">Total Anggota</p>
-                <h2 class="mt-3 text-4xl font-extrabold">{{ $totalAnggota }}</h2>
-            </div>
-
-            <div class="rounded-3xl border bg-white p-7 shadow-sm">
-                <p class="text-sm text-slate-500">Total Peminjaman</p>
-                <h2 class="mt-3 text-4xl font-extrabold">{{ $totalPeminjaman }}</h2>
-            </div>
-        </div>
-    </section>
-
-    <section class="mx-auto mt-16 max-w-7xl px-5">
-        <div class="mb-8 flex items-center justify-between">
-            <div>
-                <h2 class="text-3xl font-extrabold">Buku Terbaru</h2>
-                <p class="mt-2 text-slate-500">Koleksi buku terbaru yang tersedia di perpustakaan.</p>
-            </div>
-
-            <a href="{{ route('frontend.buku') }}" class="font-semibold text-blue-600 hover:text-blue-700">
-                Lihat Semua
-            </a>
-        </div>
-
-        <div class="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-            @forelse ($bukus as $buku)
-                <x-frontend.book-card :buku="$buku" />
-            @empty
-                <div class="col-span-full rounded-3xl border bg-white p-10 text-center text-slate-500">
-                    Belum ada data buku.
-                </div>
-            @endforelse
-        </div>
-    </section>
-</div>
+        </section>
+    </main>
+</x-public-layout>

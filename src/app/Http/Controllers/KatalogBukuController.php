@@ -3,47 +3,248 @@
 namespace App\Http\Controllers;
 
 use App\Models\Buku;
+use App\Models\KategoriBuku;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class KatalogBukuController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $search = $request->query('search');
+        $validated = $request->validate([
+            'search' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'kategori' => [
+                'nullable',
+                'integer',
+            ],
+            'tahun' => [
+                'nullable',
+                'integer',
+                'min:1900',
+                'max:' . now()->year,
+            ],
+            'tersedia' => [
+                'nullable',
+                'boolean',
+            ],
+            'urutkan' => [
+                'nullable',
+                'in:terbaru,judul,penulis,tersedia',
+            ],
+        ]);
 
-        $bukus = Buku::query()
-            ->with(['kategoriBuku', 'rakBuku'])
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('kode_buku', 'like', "%{$search}%")
-                        ->orWhere('judul_buku', 'like', "%{$search}%")
-                        ->orWhere('penulis', 'like', "%{$search}%")
-                        ->orWhere('penerbit', 'like', "%{$search}%")
-                        ->orWhere('isbn', 'like', "%{$search}%")
-                        ->orWhereHas('kategoriBuku', function ($query) use ($search) {
-                            $query->where('nama_kategori', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('rakBuku', function ($query) use ($search) {
-                            $query->where('nama_rak', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->latest()
+        $search = trim(
+            (string) ($validated['search'] ?? '')
+        );
+
+        $kategoriId = $validated['kategori'] ?? null;
+        $tahun = $validated['tahun'] ?? null;
+
+        $hanyaTersedia = (bool) (
+            $validated['tersedia'] ?? false
+        );
+
+        $urutkan = $validated['urutkan']
+            ?? 'terbaru';
+
+        $query = Buku::query()
+            ->with([
+                'kategoriBuku',
+                'rakBuku',
+            ])
+            ->when(
+                $search !== '',
+                function (
+                    Builder $query
+                ) use ($search): void {
+                    $query->where(
+                        function (
+                            Builder $query
+                        ) use ($search): void {
+                            $query
+                                ->where(
+                                    'kode_buku',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'judul_buku',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'penulis',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'penerbit',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'isbn',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhereHas(
+                                    'kategoriBuku',
+                                    function (
+                                        Builder $query
+                                    ) use ($search): void {
+                                        $query->where(
+                                            'nama_kategori',
+                                            'like',
+                                            "%{$search}%"
+                                        );
+                                    }
+                                )
+                                ->orWhereHas(
+                                    'rakBuku',
+                                    function (
+                                        Builder $query
+                                    ) use ($search): void {
+                                        $query->where(
+                                            'nama_rak',
+                                            'like',
+                                            "%{$search}%"
+                                        );
+                                    }
+                                );
+                        }
+                    );
+                }
+            )
+            ->when(
+                $kategoriId,
+                function (
+                    Builder $query
+                ) use ($kategoriId): void {
+                    $query->whereHas(
+                        'kategoriBuku',
+                        function (
+                            Builder $query
+                        ) use ($kategoriId): void {
+                            $query->whereKey(
+                                $kategoriId
+                            );
+                        }
+                    );
+                }
+            )
+            ->when(
+                $tahun,
+                fn (Builder $query) =>
+                    $query->where(
+                        'tahun_terbit',
+                        $tahun
+                    )
+            )
+            ->when(
+                $hanyaTersedia,
+                fn (Builder $query) =>
+                    $query->where(
+                        'stok',
+                        '>',
+                        0
+                    )
+            );
+
+        match ($urutkan) {
+            'judul' => $query
+                ->orderBy('judul_buku'),
+
+            'penulis' => $query
+                ->orderBy('penulis'),
+
+            'tersedia' => $query
+                ->orderByDesc('stok')
+                ->orderBy('judul_buku'),
+
+            default => $query
+                ->latest('id'),
+        };
+
+        $bukus = $query
             ->paginate(12)
             ->withQueryString();
 
-        return view('frontend.pages.buku', [
-            'bukus' => $bukus,
-            'search' => $search,
-        ]);
+        $kategoris = KategoriBuku::query()
+            ->orderBy('nama_kategori')
+            ->get();
+
+        $tahunTerbit = Buku::query()
+            ->whereNotNull('tahun_terbit')
+            ->distinct()
+            ->orderByDesc('tahun_terbit')
+            ->pluck('tahun_terbit');
+
+        return view(
+            'frontend.pages.buku',
+            [
+                'bukus' => $bukus,
+                'kategoris' => $kategoris,
+                'tahunTerbit' => $tahunTerbit,
+                'search' => $search,
+                'kategoriId' => $kategoriId,
+                'tahun' => $tahun,
+                'hanyaTersedia' =>
+                    $hanyaTersedia,
+                'urutkan' => $urutkan,
+            ]
+        );
     }
 
-    public function show(Buku $buku)
+    public function show(Buku $buku): View
     {
-        $buku->load(['kategoriBuku', 'rakBuku']);
-
-        return view('frontend.pages.detail-buku', [
-            'buku' => $buku,
+        $buku->load([
+            'kategoriBuku',
+            'rakBuku',
         ]);
+
+        $bukuTerkait = Buku::query()
+            ->with([
+                'kategoriBuku',
+                'rakBuku',
+            ])
+            ->whereKeyNot(
+                $buku->getKey()
+            )
+            ->when(
+                $buku->kategoriBuku,
+                function (
+                    Builder $query
+                ) use ($buku): void {
+                    $query->whereHas(
+                        'kategoriBuku',
+                        function (
+                            Builder $query
+                        ) use ($buku): void {
+                            $query->whereKey(
+                                $buku
+                                    ->kategoriBuku
+                                    ->getKey()
+                            );
+                        }
+                    );
+                }
+            )
+            ->latest('id')
+            ->limit(4)
+            ->get();
+
+        return view(
+            'frontend.pages.detail-buku',
+            [
+                'buku' => $buku,
+                'bukuTerkait' =>
+                    $bukuTerkait,
+            ]
+        );
     }
 }

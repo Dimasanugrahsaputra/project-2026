@@ -29,18 +29,50 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(Activity::class, ActivityPolicy::class);
-        Page::formActionsAlignment(Alignment::Right);
-        Notifications::alignment(Alignment::End);
-        Notifications::verticalAlignment(VerticalAlignment::End);
-        Page::$reportValidationErrorUsing = function (ValidationException $exception) {
+        /*
+        |--------------------------------------------------------------------------
+        | Activity Log Policy
+        |--------------------------------------------------------------------------
+        */
+
+        Gate::policy(
+            Activity::class,
+            ActivityPolicy::class
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filament Configuration
+        |--------------------------------------------------------------------------
+        */
+
+        Page::formActionsAlignment(
+            Alignment::Right
+        );
+
+        Notifications::alignment(
+            Alignment::End
+        );
+
+        Notifications::verticalAlignment(
+            VerticalAlignment::End
+        );
+
+        Page::$reportValidationErrorUsing = function (
+            ValidationException $exception
+        ): void {
             Notification::make()
                 ->title($exception->getMessage())
                 ->danger()
                 ->send();
         };
-        MountableAction::configureUsing(function (MountableAction $action) {
-            $action->modalFooterActionsAlignment(Alignment::Right);
-        });
+
+        MountableAction::configureUsing(
+            function (MountableAction $action): void {
+                $action->modalFooterActionsAlignment(
+                    Alignment::Right
+                );
+            }
+        );
     }
 }

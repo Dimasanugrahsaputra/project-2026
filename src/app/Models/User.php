@@ -55,12 +55,50 @@ class User extends Authenticatable implements FilamentUser
 
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return $this->role === self::ROLE_ADMIN
+            || $this->hasRole(self::ROLE_ADMIN);
     }
 
     public function isAnggota(): bool
     {
-        return $this->role === self::ROLE_ANGGOTA;
+        return $this->role === self::ROLE_ANGGOTA
+            || $this->hasRole(self::ROLE_ANGGOTA);
+    }
+
+    public function isActiveAnggota(): bool
+    {
+        $this->loadMissing('anggota');
+
+        if (! $this->isAnggota()) {
+            return false;
+        }
+
+        if (! $this->anggota) {
+            return false;
+        }
+
+        $statusAnggota = strtolower(
+            trim((string) $this->anggota->status)
+        );
+
+        $statusUser = strtolower(
+            trim((string) ($this->status ?? 'aktif'))
+        );
+
+        $statusAktif = [
+            'aktif',
+            'active',
+        ];
+
+        return in_array(
+            $statusAnggota,
+            $statusAktif,
+            true
+        ) && in_array(
+            $statusUser,
+            $statusAktif,
+            true
+        );
     }
 
     public function canAccessPanel(Panel $panel): bool

@@ -1,369 +1,710 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
+@php
+    /*
+    |--------------------------------------------------------------------------
+    | Sampul Buku
+    |--------------------------------------------------------------------------
+    */
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    $rawCover =
+        $buku->cover_url
+        ?? $buku->url_gambar
+        ?? $buku->gambar_sampul
+        ?? $buku->cover
+        ?? $buku->gambar
+        ?? null;
 
-    <title>
-        {{ $buku->judul_buku }} - Detail Buku
-    </title>
+    $coverUrl = null;
 
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js',
-    ])
-</head>
+    if (filled($rawCover)) {
+        $normalizedCover = ltrim(
+            (string) $rawCover,
+            '/'
+        );
 
-<body class="min-h-screen bg-slate-100 text-slate-900">
-    <nav class="bg-slate-900 text-white">
-        <div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
-            <a href="{{ route('katalog.index') }}">
-                <h1 class="text-xl font-bold">
-                    Perpustakaan Digital
-                </h1>
+        if (
+            \Illuminate\Support\Str::startsWith(
+                $normalizedCover,
+                [
+                    'http://',
+                    'https://',
+                ]
+            )
+        ) {
+            $coverUrl = $normalizedCover;
+        } elseif (
+            \Illuminate\Support\Str::startsWith(
+                $normalizedCover,
+                'storage/'
+            )
+        ) {
+            $coverUrl = asset($normalizedCover);
+        } else {
+            $coverUrl = asset(
+                'storage/' . $normalizedCover
+            );
+        }
+    }
 
-                <p class="text-sm text-slate-300">
-                    Sistem Informasi Peminjaman Buku Online
-                </p>
-            </a>
+    /*
+    |--------------------------------------------------------------------------
+    | Ketersediaan Buku
+    |--------------------------------------------------------------------------
+    */
 
-            <div class="flex flex-wrap items-center gap-3">
-                @guest
-                    <a
-                        href="{{ route('anggota.login.switch') }}"
-                        class="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white transition hover:bg-emerald-700"
-                    >
-                        Login Anggota
-                    </a>
+    $stok = (int) ($buku->stok ?? 0);
 
-                    <a
-                        href="{{ route('admin.login.switch') }}"
-                        class="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white transition hover:bg-blue-700"
-                    >
-                        Login Admin
-                    </a>
-                @else
-                    @if (auth()->user()->anggota)
-                        <span class="font-semibold text-white">
-                            {{ auth()->user()->name }}
-                        </span>
-                    @else
-                        <a
-                            href="{{ url('/admin') }}"
-                            class="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white transition hover:bg-blue-700"
-                        >
-                            Dashboard Admin
-                        </a>
-                    @endif
+    $tersedia = $stok > 0;
 
-                    <form
-                        method="POST"
-                        action="{{ route('anggota.logout') }}"
-                    >
-                        @csrf
+    /*
+    |--------------------------------------------------------------------------
+    | Nilai Awal Form
+    |--------------------------------------------------------------------------
+    */
 
-                        <button
-                            type="submit"
-                            class="rounded-xl border border-red-400 px-5 py-2 font-semibold text-red-300 transition hover:bg-red-950"
-                        >
-                            Logout
-                        </button>
-                    </form>
-                @endguest
-            </div>
-        </div>
-    </nav>
+    $jumlahAwal = old(
+        'jumlah',
+        old('jumlah_buku', 1)
+    );
 
-    <main class="mx-auto max-w-6xl px-6 py-10">
-        <a
-            href="{{ route('katalog.index') }}"
-            class="mb-6 inline-flex rounded-xl bg-slate-800 px-5 py-3 font-semibold text-white transition hover:bg-slate-700"
-        >
-            ← Kembali ke Katalog
-        </a>
+    /*
+    |--------------------------------------------------------------------------
+    | URL Login Anggota
+    |--------------------------------------------------------------------------
+    */
 
-        @if (session('success'))
-            <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-100 px-5 py-4 font-medium text-emerald-800">
-                {{ session('success') }}
-            </div>
-        @endif
+    $loginUrl =
+        \Illuminate\Support\Facades\Route::has(
+            'anggota.login'
+        )
+            ? route(
+                'anggota.login',
+                [
+                    'redirect' => url()->current(),
+                ]
+            )
+            : url(
+                '/login-anggota?redirect='
+                . urlencode(url()->current())
+            );
+@endphp
 
-        @if (session('error'))
-            <div class="mb-6 rounded-xl border border-red-200 bg-red-100 px-5 py-4 font-medium text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
+<x-public-layout
+    :title="$buku->judul_buku"
+    active="katalog"
+>
+    <main class="page">
+        <div class="container">
 
-        @php
-            $placeholder = 'https://placehold.co/600x800/e2e8f0/334155?text=Cover+Buku';
-
-            if (filled($buku->cover)) {
-                $coverUrl = str_starts_with($buku->cover, 'http')
-                    ? $buku->cover
-                    : asset('storage/' . ltrim($buku->cover, '/'));
-            } else {
-                $coverUrl = $placeholder;
-            }
-        @endphp
-
-        <div class="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
-            <div class="min-h-[550px] bg-slate-200">
-                <img
-                    src="{{ $coverUrl }}"
-                    alt="Cover {{ $buku->judul_buku }}"
-                    class="h-full min-h-[550px] w-full object-cover"
-                    onerror="this.onerror=null; this.src='{{ $placeholder }}';"
+            {{-- Pesan Berhasil --}}
+            @if (session('success'))
+                <div
+                    style="
+                        margin-bottom: 24px;
+                        padding: 16px;
+                        color: #194f48;
+                        background: #d9f2ed;
+                        border: 1px solid #9cd1c7;
+                        border-radius: 8px;
+                    "
                 >
-            </div>
+                    <strong>
+                        Peminjaman berhasil diajukan.
+                    </strong>
 
-            <div class="p-8">
-                <span class="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
-                    {{ $buku->kode_buku ?? 'Kode belum tersedia' }}
+                    <div style="margin-top: 4px;">
+                        {{ session('success') }}
+                    </div>
+                </div>
+            @endif
+
+            {{-- Pesan Gagal --}}
+            @if (session('error'))
+                <div
+                    style="
+                        margin-bottom: 24px;
+                        padding: 16px;
+                        color: #93000a;
+                        background: #ffdad6;
+                        border: 1px solid #ba1a1a;
+                        border-radius: 8px;
+                    "
+                >
+                    <strong>
+                        Peminjaman gagal.
+                    </strong>
+
+                    <div style="margin-top: 4px;">
+                        {{ session('error') }}
+                    </div>
+                </div>
+            @endif
+
+            {{-- Error Validasi --}}
+            @if ($errors->any())
+                <div
+                    style="
+                        margin-bottom: 24px;
+                        padding: 16px;
+                        color: #93000a;
+                        background: #ffdad6;
+                        border: 1px solid #ba1a1a;
+                        border-radius: 8px;
+                    "
+                >
+                    <strong>
+                        Data peminjaman belum benar.
+                    </strong>
+
+                    <ul
+                        style="
+                            margin: 8px 0 0;
+                            padding-left: 20px;
+                        "
+                    >
+                        @foreach ($errors->all() as $error)
+                            <li>
+                                {{ $error }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- Breadcrumb --}}
+            <nav
+                class="breadcrumb"
+                aria-label="Breadcrumb"
+            >
+                <a href="{{ route('home') }}">
+                    Beranda
+                </a>
+
+                <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                >
+                    chevron_right
                 </span>
 
-                <h1 class="mt-5 text-3xl font-bold text-slate-900">
-                    {{ $buku->judul_buku }}
-                </h1>
+                <a href="{{ route('katalog.index') }}">
+                    Katalog Buku
+                </a>
 
-                <div class="mt-4">
-                    @if ((int) $buku->stok > 0)
-                        <span class="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
-                            Tersedia: {{ $buku->stok }}
-                        </span>
+                <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                >
+                    chevron_right
+                </span>
+
+                <span aria-current="page">
+                    {{ $buku->judul_buku }}
+                </span>
+            </nav>
+
+            <div class="book-detail">
+
+                {{-- Sampul Buku --}}
+                <div class="book-detail-cover">
+                    @if ($coverUrl)
+                        <img
+                            src="{{ $coverUrl }}"
+                            alt="Sampul {{ $buku->judul_buku }}"
+                        >
                     @else
-                        <span class="inline-flex rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-700">
-                            Stok Habis
-                        </span>
+                        <div class="book-cover-placeholder">
+                            <span class="material-symbols-outlined">
+                                menu_book
+                            </span>
+                        </div>
                     @endif
                 </div>
 
-                <div class="mt-6 divide-y divide-slate-200 border-y border-slate-200">
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            Penulis
-                        </span>
+                {{-- Informasi Buku --}}
+                <article>
+                    <header class="detail-header">
+                        <div class="detail-badges">
 
-                        <span class="text-slate-600">
-                            {{ $buku->penulis ?? '-' }}
-                        </span>
-                    </div>
+                            {{-- Kategori --}}
+                            <span class="badge badge-neutral">
+                                <span
+                                    class="material-symbols-outlined"
+                                    style="font-size: 14px"
+                                >
+                                    category
+                                </span>
 
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            Penerbit
-                        </span>
+                                {{
+                                    $buku
+                                        ->kategoriBuku
+                                        ?->nama_kategori
+                                    ?? 'Tanpa Kategori'
+                                }}
+                            </span>
 
-                        <span class="text-slate-600">
-                            {{ $buku->penerbit ?? '-' }}
-                        </span>
-                    </div>
+                            {{-- Status Stok --}}
+                            <span
+                                class="badge {{ $tersedia ? 'badge-success' : 'badge-danger' }}"
+                            >
+                                <span
+                                    class="material-symbols-outlined"
+                                    style="font-size: 14px"
+                                >
+                                    {{
+                                        $tersedia
+                                            ? 'check_circle'
+                                            : 'block'
+                                    }}
+                                </span>
 
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            Tahun Terbit
-                        </span>
-
-                        <span class="text-slate-600">
-                            {{ $buku->tahun_terbit ?? '-' }}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            ISBN
-                        </span>
-
-                        <span class="text-slate-600">
-                            {{ $buku->isbn ?? '-' }}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            Kategori
-                        </span>
-
-                        <span class="text-slate-600">
-                            {{ $buku->kategoriBuku?->nama_kategori ?? '-' }}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 py-4">
-                        <span class="font-semibold text-slate-800">
-                            Rak Buku
-                        </span>
-
-                        <span class="text-slate-600">
-                            {{ $buku->rakBuku?->nama_rak ?? '-' }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="mt-7">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        Deskripsi Buku
-                    </h2>
-
-                    <p class="mt-3 leading-7 text-slate-600">
-                        {{ $buku->deskripsi ?: 'Belum ada deskripsi buku.' }}
-                    </p>
-                </div>
-
-                <div class="mt-7 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                    <h2 class="text-xl font-bold text-blue-900">
-                        Meminjam Buku
-                    </h2>
-
-                    @if ((int) $buku->stok <= 0)
-                        <div class="mt-4 rounded-xl bg-red-100 p-4 text-sm font-medium text-red-700">
-                            Stok buku sedang habis.
+                                {{
+                                    $tersedia
+                                        ? 'Tersedia: '
+                                            . $stok
+                                            . ' buku'
+                                        : 'Stok belum tersedia'
+                                }}
+                            </span>
                         </div>
-                    @else
-                        @auth
-                            @if (auth()->user()->anggota)
-                                <p class="mt-2 text-sm leading-6 text-blue-700">
-                                    Isi jumlah buku dan tanggal rencana pengambilan.
-                                    Permintaan akan diperiksa oleh admin.
-                                </p>
+
+                        <h1 class="detail-title">
+                            {{ $buku->judul_buku }}
+                        </h1>
+
+                        <p class="detail-author">
+                            oleh
+
+                            <strong>
+                                {{
+                                    $buku->penulis
+                                    ?: 'Penulis belum dicantumkan'
+                                }}
+                            </strong>
+                        </p>
+                    </header>
+
+                    {{-- Metadata Buku --}}
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <small>
+                                Tahun Terbit
+                            </small>
+
+                            <strong>
+                                {{
+                                    $buku->tahun_terbit
+                                    ?: '-'
+                                }}
+                            </strong>
+                        </div>
+
+                        <div class="meta-item">
+                            <small>
+                                Penerbit
+                            </small>
+
+                            <strong>
+                                {{
+                                    $buku->penerbit
+                                    ?: '-'
+                                }}
+                            </strong>
+                        </div>
+
+                        <div class="meta-item">
+                            <small>
+                                ISBN
+                            </small>
+
+                            <strong>
+                                {{
+                                    $buku->isbn
+                                    ?: '-'
+                                }}
+                            </strong>
+                        </div>
+
+                        <div class="meta-item">
+                            <small>
+                                Lokasi Rak
+                            </small>
+
+                            <strong>
+                                {{
+                                    $buku
+                                        ->rakBuku
+                                        ?->nama_rak
+                                    ?? '-'
+                                }}
+                            </strong>
+                        </div>
+                    </div>
+
+                    {{-- Deskripsi Buku --}}
+                    <section>
+                        <h2 class="detail-section-title">
+                            Deskripsi Buku
+                        </h2>
+
+                        <div class="synopsis">
+                            {{
+                                $buku->deskripsi
+                                ?: 'Deskripsi buku belum tersedia.'
+                            }}
+                        </div>
+                    </section>
+
+                    {{-- Form Peminjaman --}}
+                    @auth
+                        @if ($tersedia)
+                            <section
+                                style="
+                                    margin-top: 28px;
+                                    padding: 20px;
+                                    background: #ffffff;
+                                    border: 1px solid #d7d9de;
+                                    border-radius: 8px;
+                                "
+                            >
+                                <h2
+                                    class="detail-section-title"
+                                    style="margin-bottom: 16px;"
+                                >
+                                    Form Pengajuan Peminjaman
+                                </h2>
 
                                 <form
+                                    id="form-peminjaman"
+                                    action="{{ route('meminjam.store', [
+                                        'buku' => $buku->getKey(),
+                                    ]) }}"
                                     method="POST"
-                                    action="{{ route('meminjam.store', $buku) }}"
-                                    class="mt-5 space-y-4"
                                 >
                                     @csrf
 
-                                    <div>
+                                    {{-- Jumlah Buku --}}
+                                    <div style="margin-bottom: 16px;">
                                         <label
                                             for="jumlah"
-                                            class="mb-1 block text-sm font-semibold text-slate-700"
+                                            style="
+                                                display: block;
+                                                margin-bottom: 7px;
+                                                color: #04162e;
+                                                font-size: 14px;
+                                                font-weight: 700;
+                                            "
                                         >
-                                            Jumlah
+                                            Jumlah Buku
+
+                                            <span style="color: #ba1a1a;">
+                                                *
+                                            </span>
                                         </label>
 
                                         <input
-                                            id="jumlah"
                                             type="number"
+                                            id="jumlah"
                                             name="jumlah"
-                                            value="{{ old('jumlah', 1) }}"
+                                            value="{{ $jumlahAwal }}"
                                             min="1"
-                                            max="{{ $buku->stok }}"
+                                            max="{{ $stok }}"
                                             required
-                                            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                            class="input"
+                                        >
+
+                                        {{-- Alias untuk controller yang menggunakan jumlah_buku --}}
+                                        <input
+                                            type="hidden"
+                                            id="jumlah_buku"
+                                            name="jumlah_buku"
+                                            value="{{ $jumlahAwal }}"
                                         >
 
                                         @error('jumlah')
-                                            <p class="mt-1 text-sm text-red-600">
+                                            <small
+                                                style="
+                                                    display: block;
+                                                    margin-top: 6px;
+                                                    color: #ba1a1a;
+                                                "
+                                            >
                                                 {{ $message }}
-                                            </p>
+                                            </small>
                                         @enderror
+
+                                        @error('jumlah_buku')
+                                            <small
+                                                style="
+                                                    display: block;
+                                                    margin-top: 6px;
+                                                    color: #ba1a1a;
+                                                "
+                                            >
+                                                {{ $message }}
+                                            </small>
+                                        @enderror
+
+                                        <small
+                                            style="
+                                                display: block;
+                                                margin-top: 6px;
+                                                color: #5e5f5c;
+                                            "
+                                        >
+                                            Maksimal sesuai stok yang tersedia:
+                                            {{ $stok }} buku.
+                                        </small>
                                     </div>
 
-                                    <div>
+                                    {{-- Tanggal Rencana Pengambilan --}}
+                                    <div style="margin-bottom: 16px;">
                                         <label
                                             for="tanggal_rencana_pengambilan"
-                                            class="mb-1 block text-sm font-semibold text-slate-700"
+                                            style="
+                                                display: block;
+                                                margin-bottom: 7px;
+                                                color: #04162e;
+                                                font-size: 14px;
+                                                font-weight: 700;
+                                            "
                                         >
                                             Tanggal Rencana Pengambilan
+
+                                            <span style="color: #ba1a1a;">
+                                                *
+                                            </span>
                                         </label>
 
                                         <input
-                                            id="tanggal_rencana_pengambilan"
                                             type="date"
+                                            id="tanggal_rencana_pengambilan"
                                             name="tanggal_rencana_pengambilan"
                                             value="{{ old(
                                                 'tanggal_rencana_pengambilan',
-                                                now()->addDay()->toDateString()
+                                                now()->addDay()->format('Y-m-d')
                                             ) }}"
-                                            min="{{ now()->toDateString() }}"
+                                            min="{{ now()->format('Y-m-d') }}"
                                             required
-                                            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                            class="input"
                                         >
 
                                         @error('tanggal_rencana_pengambilan')
-                                            <p class="mt-1 text-sm text-red-600">
+                                            <small
+                                                style="
+                                                    display: block;
+                                                    margin-top: 6px;
+                                                    color: #ba1a1a;
+                                                "
+                                            >
                                                 {{ $message }}
-                                            </p>
+                                            </small>
                                         @enderror
+
+                                        <small
+                                            style="
+                                                display: block;
+                                                margin-top: 6px;
+                                                color: #5e5f5c;
+                                            "
+                                        >
+                                            Pilih tanggal saat buku akan
+                                            diambil di perpustakaan.
+                                        </small>
                                     </div>
 
-                                    <div>
+                                    {{-- Catatan Anggota --}}
+                                    <div style="margin-bottom: 20px;">
                                         <label
-                                            for="catatan"
-                                            class="mb-1 block text-sm font-semibold text-slate-700"
+                                            for="catatan_anggota"
+                                            style="
+                                                display: block;
+                                                margin-bottom: 7px;
+                                                color: #04162e;
+                                                font-size: 14px;
+                                                font-weight: 700;
+                                            "
                                         >
-                                            Catatan
+                                            Catatan untuk Admin
+
+                                            <span
+                                                style="
+                                                    color: #5e5f5c;
+                                                    font-weight: 400;
+                                                "
+                                            >
+                                                (Opsional)
+                                            </span>
                                         </label>
 
                                         <textarea
-                                            id="catatan"
-                                            name="catatan"
+                                            id="catatan_anggota"
+                                            name="catatan_anggota"
                                             rows="3"
-                                            placeholder="Catatan tambahan, bila ada"
-                                            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                                        >{{ old('catatan') }}</textarea>
+                                            class="textarea"
+                                            placeholder="Contoh: Saya akan mengambil buku pada sore hari."
+                                        >{{ old('catatan_anggota') }}</textarea>
 
-                                        @error('catatan')
-                                            <p class="mt-1 text-sm text-red-600">
+                                        @error('catatan_anggota')
+                                            <small
+                                                style="
+                                                    display: block;
+                                                    margin-top: 6px;
+                                                    color: #ba1a1a;
+                                                "
+                                            >
                                                 {{ $message }}
-                                            </p>
+                                            </small>
                                         @enderror
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        class="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
-                                    >
-                                        Meminjam
-                                    </button>
+                                    <div class="detail-actions">
+                                        <button
+                                            type="submit"
+                                            class="button button-primary"
+                                        >
+                                            <span class="material-symbols-outlined">
+                                                bookmark_add
+                                            </span>
+
+                                            Ajukan Peminjaman
+                                        </button>
+
+                                        <a
+                                            href="{{ route('katalog.index') }}"
+                                            class="button button-secondary"
+                                        >
+                                            <span class="material-symbols-outlined">
+                                                arrow_back
+                                            </span>
+
+                                            Kembali ke Katalog
+                                        </a>
+                                    </div>
                                 </form>
-                            @else
-                                <p class="mt-3 text-sm text-blue-700">
-                                    Akun yang aktif bukan akun anggota.
-                                </p>
-
-                                <a
-                                    href="{{ route('anggota.login.switch') }}"
-                                    class="mt-4 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
-                                >
-                                    Login Anggota
-                                </a>
-                            @endif
+                            </section>
                         @else
-                            <p class="mt-3 text-sm leading-6 text-blue-700">
-                                Silakan login atau daftar sebagai anggota terlebih dahulu.
-                            </p>
-
-                            <div class="mt-4 flex flex-wrap gap-3">
-                                <a
-                                    href="{{ route('anggota.login.switch') }}"
-                                    class="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+                            <div class="detail-actions">
+                                <button
+                                    type="button"
+                                    class="button button-primary"
+                                    disabled
                                 >
-                                    Login Anggota
-                                </a>
+                                    <span class="material-symbols-outlined">
+                                        block
+                                    </span>
+
+                                    Stok Belum Tersedia
+                                </button>
 
                                 <a
-                                    href="{{ route('anggota.register') }}"
-                                    class="rounded-xl border border-blue-300 bg-white px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-100"
+                                    href="{{ route('katalog.index') }}"
+                                    class="button button-secondary"
                                 >
-                                    Daftar Anggota
+                                    <span class="material-symbols-outlined">
+                                        arrow_back
+                                    </span>
+
+                                    Kembali ke Katalog
                                 </a>
                             </div>
-                        @endauth
-                    @endif
-                </div>
+                        @endif
+                    @else
+                        <div class="detail-actions">
+                            <a
+                                href="{{ $loginUrl }}"
+                                class="button button-primary"
+                            >
+                                <span class="material-symbols-outlined">
+                                    login
+                                </span>
+
+                                Login untuk Meminjam
+                            </a>
+
+                            <a
+                                href="{{ route('katalog.index') }}"
+                                class="button button-secondary"
+                            >
+                                <span class="material-symbols-outlined">
+                                    arrow_back
+                                </span>
+
+                                Kembali ke Katalog
+                            </a>
+                        </div>
+                    @endauth
+                </article>
             </div>
+
+            {{-- Buku Terkait --}}
+            @if ($bukuTerkait->isNotEmpty())
+                <section class="section related-section">
+                    <div class="section-head">
+                        <div>
+                            <p class="eyebrow">
+                                Rekomendasi
+                            </p>
+
+                            <h2 class="section-title">
+                                Buku Terkait
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="book-grid">
+                        @foreach ($bukuTerkait as $item)
+                            <x-book-card
+                                :buku="$item"
+                            />
+                        @endforeach
+                    </div>
+                </section>
+            @endif
         </div>
     </main>
 
-    <footer class="mt-10 bg-slate-900 text-white">
-        <div class="mx-auto max-w-7xl px-6 py-6 text-center text-sm text-slate-300">
-            © {{ date('Y') }} Perpustakaan Digital — Sistem Informasi Peminjaman Buku Online
-        </div>
-    </footer>
-</body>
-</html>
+    @push('scripts')
+        <script>
+            document.addEventListener(
+                'DOMContentLoaded',
+                function () {
+                    const jumlahInput =
+                        document.getElementById('jumlah');
+
+                    const jumlahBukuInput =
+                        document.getElementById('jumlah_buku');
+
+                    const formPeminjaman =
+                        document.getElementById('form-peminjaman');
+
+                    function sinkronkanJumlah() {
+                        if (
+                            jumlahInput
+                            && jumlahBukuInput
+                        ) {
+                            jumlahBukuInput.value =
+                                jumlahInput.value;
+                        }
+                    }
+
+                    jumlahInput?.addEventListener(
+                        'input',
+                        sinkronkanJumlah
+                    );
+
+                    jumlahInput?.addEventListener(
+                        'change',
+                        sinkronkanJumlah
+                    );
+
+                    formPeminjaman?.addEventListener(
+                        'submit',
+                        sinkronkanJumlah
+                    );
+
+                    sinkronkanJumlah();
+                }
+            );
+        </script>
+    @endpush
+</x-public-layout>

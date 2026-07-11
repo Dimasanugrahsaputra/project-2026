@@ -15,6 +15,7 @@ class Denda extends Model
         'jumlah_denda',
         'jumlah_dibayar',
         'tanggal_pembayaran',
+        'bukti_pembayaran_dikirim_at',
         'status',
         'status_pembayaran',
         'catatan',
@@ -24,6 +25,7 @@ class Denda extends Model
         'jumlah_denda' => 'decimal:2',
         'jumlah_dibayar' => 'decimal:2',
         'tanggal_pembayaran' => 'date',
+        'bukti_pembayaran_dikirim_at' => 'datetime',
     ];
 
     public function pengembalianBuku(): BelongsTo
